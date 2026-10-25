@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2747c9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Fiszki ES">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Fiszki Arriba Joven</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Lexend:wght@400;500;700&family=Caveat:wght@500;700&display=swap">
+<style>
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+[hidden] { display: none !important; }
+/* Layout: karta-fiszka z papieru (zawsze jasna jak kartka z zeszytu) na chłodnym tle; polskie tłumaczenie "długopisem" jak notatki w podręczniku */
+:root {
+  --bg: #eceff5;
+  --fg: #1b1e27;
+  --muted: #5b6275;
+  --surface: #ffffff;
+  --line: #d3d8e3;
+  --accent: #2747c9;
+  --accent-fg: #ffffff;
+  --good: #1d7f55;
+  --bad: #b93b34;
+  --shadow: 0 1px 2px rgb(20 30 60 / .08), 0 8px 24px rgb(20 30 60 / .10);
+
+  /* kartka i rysunek - te same w obu motywach, bo to "papier" */
+  --plate: #fbfaf5;
+  --plate-line: #e4e1d6;
+  --pi: #24262c;
+  --pen: #2340b8;
+  --cl: #ffffff;
+  --cl2: #c9d3ea;
+  --pants: #4a5266;
+  --skin: #f4d9c3;
+  --eye-white: #ffffff;
+  --h-black: #2e2b2a;
+  --h-brown: #7b4a2a;
+  --h-blond: #ecc768;
+  --h-grey: #d2d2d2;
+  --h-red: #c9542c;
+  --h-dyed: #6c5ce0;
+  --e-light: #9fc3dd;
+  --e-dark: #3a2618;
+  --e-blue: #3f8fd6;
+  --e-green: #3aa257;
+  --e-grey: #9aa1a8;
+  --e-brown: #8a5228;
+  --denim: #6f8fc2;
+  --gold: #f0b93a;
+  --red: #dc4a3e;
+  --pink: #f4a3b4;
+
+  --f-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body: "Lexend", "Segoe UI", system-ui, sans-serif;
+  --f-pen: "Caveat", "Bradley Hand", "Segoe Print", cursive;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14161b; --fg: #e7e9ef; --muted: #9aa1b3; --surface: #1f2229; --line: #343846;
+    --accent: #8fa3ff; --accent-fg: #10142a; --good: #4cc490; --bad: #f07d74;
+    --shadow: 0 1px 2px rgb(0 0 0 / .4), 0 10px 30px rgb(0 0 0 / .45);
+    --plate: #efece2; --plate-line: #d9d5c8;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14161b; --fg: #e7e9ef; --muted: #9aa1b3; --surface: #1f2229; --line: #343846;
+  --accent: #8fa3ff; --accent-fg: #10142a; --good: #4cc490; --bad: #f07d74;
+  --shadow: 0 1px 2px rgb(0 0 0 / .4), 0 10px 30px rgb(0 0 0 / .45);
+  --plate: #efece2; --plate-line: #d9d5c8;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--f-body); font-size: 15px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 28px;
+}
+.wrap { max-width: 1040px; margin: 0 auto; display: grid; gap: 18px; }
+
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(28px, 6vw, 40px); line-height: 1; margin: 0; letter-spacing: -.02em; text-wrap: balance; }
+h1 .pen { font-family: var(--f-pen); color: var(--accent); font-weight: 700; letter-spacing: 0; font-size: .9em; margin-left: .15em; }
+.sub { color: var(--muted); font-size: 13px; margin: 6px 0 0; }
+
+.decks { display: flex; flex-wrap: wrap; gap: 8px; }
+.deck {
+  font: 500 14px/1 var(--f-body); color: var(--fg);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+  padding: 9px 14px; cursor: pointer; display: inline-flex; gap: 8px; align-items: center;
+}
+.deck small { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.deck[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.deck[aria-pressed="true"] small { color: inherit; opacity: .7; }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+.seg { display: inline-flex; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-right: 6px; }
+.seg button {
+  font: 500 13px/1 var(--f-body); color: var(--muted); background: transparent; border: 0;
+  padding: 8px 11px; border-radius: 7px; cursor: pointer;
+}
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
+.grp { display: inline-flex; align-items: center; }
+.btn {
+  font: 500 14px/1 var(--f-body); border-radius: 10px; padding: 11px 16px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--fg);
+  display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+}
+.btn:hover { border-color: var(--muted); }
+button:focus-visible, .card:focus-visible, .tile:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.stat { margin-left: auto; color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 10px; font-variant-numeric: tabular-nums; }
+.meter { width: 90px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--good); }
+
+/* ---- karta ---- */
+.stage { display: grid; justify-items: center; gap: 16px; }
+.card, .tile { container-type: inline-size; perspective: 1200px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.card { width: min(100%, 360px); aspect-ratio: 4 / 5; max-width: 100%; }
+.inner { position: relative; width: 100%; height: 100%; transition: transform .5s cubic-bezier(.3,.7,.3,1); transform-style: preserve-3d; }
+.flipped .inner { transform: rotateY(180deg); }
+.side {
+  position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  background: var(--plate); color: var(--pi); border-radius: 16px; box-shadow: var(--shadow);
+  border: 1px solid var(--plate-line);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4cqi;
+  padding: 7cqi; text-align: center; overflow: hidden;
+  background-image: repeating-linear-gradient(to bottom, transparent 0 calc(10cqi - 1px), var(--plate-line) calc(10cqi - 1px) 10cqi);
+  background-position: 0 6cqi;
+}
+.side.back { transform: rotateY(180deg); }
+.side.pic { background-image: none; }
+.ill { width: 100%; flex: 1 1 auto; min-height: 0; position: relative; }
+.ill svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.side.back .ill { flex: 0 0 44%; width: 62%; }
+.ill path, .ill circle, .ill ellipse, .ill rect { stroke: var(--pi); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+.ill .s2 path, .ill .s2 circle, .ill .s2 ellipse, .ill .s2 rect { stroke-width: 4; }
+.chip {
+  font: 500 3.6cqi/1 var(--f-body); text-transform: uppercase; letter-spacing: .1em;
+  color: var(--pi); background: var(--plate-line); padding: 1.6cqi 2.6cqi; border-radius: 99px;
+}
+.es { font: 800 11cqi/1.05 var(--f-display); letter-spacing: -.01em; text-wrap: balance; overflow-wrap: anywhere; }
+.es .art { font-weight: 500; opacity: .55; }
+.es .fem { font-weight: 500; }
+.pl { font: 700 11.5cqi/1 var(--f-pen); color: var(--pen); text-wrap: balance; }
+.ex { font: 400 4.4cqi/1.3 var(--f-body); font-style: italic; color: #5b5e66; }
+.say {
+  position: absolute; top: 3.5cqi; right: 3.5cqi; width: 11cqi; height: 11cqi; min-width: 32px; min-height: 32px;
+  border-radius: 50%; border: 1px solid var(--plate-line); background: var(--plate); color: var(--pi);
+  display: grid; place-items: center; cursor: pointer; padding: 0;
+}
+.say svg { width: 55%; height: 55%; }
+.hint { font-size: 12px; color: var(--muted); }
+
+.progress { width: min(100%, 360px); display: grid; gap: 6px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.progress .bar { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.progress .bar i { display: block; height: 100%; background: var(--accent); transition: width .3s; }
+.actions { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; width: min(100%, 360px); }
+.btn.no { color: var(--bad); }
+.btn.yes { color: var(--good); }
+kbd { font: 500 11px var(--f-body); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; color: var(--muted); }
+
+.done { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 28px 22px; width: min(100%, 420px); text-align: center; display: grid; gap: 14px; }
+.done h2 { font: 800 28px/1.1 var(--f-display); margin: 0; }
+.done p { margin: 0; color: var(--muted); }
+.done .row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+
+/* ---- siatka ---- */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+.tile { aspect-ratio: 4 / 5; position: relative; }
+.cell { display: grid; gap: 6px; min-width: 0; }
+.cat { font: 500 11px/1.2 var(--f-body); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.cat::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--cat); flex: none; }
+.cat.ropa { --cat: var(--e-blue); }
+.cat.fisico { --cat: var(--gold); }
+.cat.caracter { --cat: var(--red); }
+.stage .cat { width: min(100%, 360px); margin-bottom: -8px; }
+.tile .side { border-radius: 12px; }
+.tile .known { position: absolute; top: 6px; left: 6px; z-index: 2; width: 10px; height: 10px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 2px var(--plate); }
+.tile .say { display: none; }
+
+footer { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 12px; }
+
+@media (max-width: 520px) {
+  .stat { margin-left: 0; width: 100%; }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) { .inner { transition: none; } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Fiszki <span class="pen">Arriba Joven</span></h1>
+      <p class="sub">Hiszpański: opis wyglądu, charakteru i ubrania. Kliknij kartę, żeby ją odwrócić.</p>
+    </div>
+    <nav class="decks" id="decks" aria-label="Talia"></nav>
+  </header>
+
+  <div class="toolbar">
+    <div class="grp"><span class="seg-label">Widok</span>
+      <div class="seg" id="views">
+        <button data-v="learn">Nauka</button>
+        <button data-v="all">Wszystkie</button>
+      </div>
+    </div>
+    <div class="grp"><span class="seg-label">Na przodzie</span>
+      <div class="seg" id="fronts">
+        <button data-f="img">Obrazek</button>
+        <button data-f="es">Hiszpański</button>
+        <button data-f="pl">Polski</button>
+      </div>
+    </div>
+    <button class="btn" id="shuffle" type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+      Tasuj od nowa
+    </button>
+    <div class="stat" id="stat"></div>
+  </div>
+
+  <main id="main"></main>
+
+  <footer>
+    <span>Słówka: Arriba Joven 1, s. 28 (ćw. 3.2 i 3.3) oraz karta „La ropa”.</span>
+    <span>v1.2.0</span>
+  </footer>
+</div>
+
+<script>
+/* ===== rysowanie ===== */
+const CL = 'var(--cl)', NS = 'stroke:none';
+const P = (d, f = CL, st = '') => `<path d="${d}" style="fill:${f};${st}"/>`;
+const L = (d, st = '') => P(d, 'none', st);
+const C = (x, y, r, f = CL, st = '') => `<circle cx="${x}" cy="${y}" r="${r}" style="fill:${f};${st}"/>`;
+const E = (x, y, rx, ry, f = CL, st = '') => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" style="fill:${f};${st}"/>`;
+const R = (x, y, w, h, f = CL, st = '', rx = 0) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" style="fill:${f};${st}"/>`;
+const TX = (x, y, t, size = 9, st = '') => `<text x="${x}" y="${y}" text-anchor="middle" style="font:700 ${size}px Lexend,system-ui,sans-serif;fill:var(--pi);${st}">${t}</text>`;
+const M = s => `<g transform="translate(100 0) scale(-1 1)">${s}</g>`;
+const T = (x, y, s, sc = 1, cls = '') => `<g class="${cls}" transform="translate(${x} ${y}) scale(${sc})">${s}</g>`;
+const band = (d, w, col) => L(d, `stroke-width:${w + 2.4}`) + L(d, `stroke:${col};stroke-width:${w}`);
+const svg = s => `<svg viewBox="0 0 100 100" aria-hidden="true">${s}</svg>`;
+const STAR = (x, y, r) => P(`M${x} ${y - r} Q${x} ${y} ${x + r} ${y} Q${x} ${y} ${x} ${y + r} Q${x} ${y} ${x - r} ${y} Q${x} ${y} ${x} ${y - r} Z`, 'var(--gold)', 'stroke-width:1.2');
+const HEART = (x, y, s = 1) => T(x, y, P('M0 4 C-7 -1 -6 -7 -2.6 -7 C-1 -7 0 -6 0 -4.6 C0 -6 1 -7 2.6 -7 C6 -7 7 -1 0 4 Z', 'var(--red)', 'stroke-width:1.3'), s);
+const FLOWER = (x, y, r = 3, col = 'var(--pink)') =>
+  [0, 72, 144, 216, 288].map(a => C(+(x + Math.cos(a * Math.PI / 180) * r).toFixed(2), +(y + Math.sin(a * Math.PI / 180) * r).toFixed(2), r * .8, col, 'stroke-width:1.2')).join('') + C(x, y, r * .55, 'var(--gold)', 'stroke-width:1.2');
+const DROP = (x, y, s = 1) => T(x, y, P('M0 -6 Q5 2 0 4 Q-5 2 0 -6 Z', 'var(--e-light)', 'stroke-width:1.5'), s);
+function bubble(x, y, w, h, text, tx, ty, size = 8.5) {
+  const bx = Math.min(Math.max(tx, x + 6), x + w - 6);
+  return P(`M${bx - 3.5} ${y + h - 1} L${tx} ${ty} L${bx + 3.5} ${y + h - 1} Z`, 'var(--eye-white)', 'stroke-width:1.6') +
+    R(x, y, w, h, 'var(--eye-white)', 'stroke-width:1.6', 5) +
+    L(`M${bx - 2.6} ${y + h} L${bx + 2.6} ${y + h}`, 'stroke:var(--eye-white);stroke-width:2.4') +
+    TX(x + w / 2, y + h / 2 + size * .36, text, size);
+}
+
+/* ---- twarz ---- */
+function hairBack(h, hc) {
+  const curls = (pts, r) => pts.map(([x, y]) => C(x, y, r, hc, 'stroke-width:4.4')).join('') + pts.map(([x, y]) => C(x, y, r, hc, NS)).join('');
+  switch (h) {
+    case 'long': return P('M31 42 C28 20 72 20 69 42 L74 88 Q62 94 56 84 L44 84 Q38 94 26 88 Z', hc);
+    case 'straight': return P('M30 40 C28 20 72 20 70 40 L72 94 L28 94 Z', hc);
+    case 'wavy': return P('M31 40 C28 20 72 20 69 40 C74 52 66 60 72 70 C78 80 68 88 72 96 L28 96 C32 88 22 80 28 70 C34 60 26 52 31 40 Z', hc);
+    case 'curly': return curls([[32, 32], [42, 24], [54, 22], [65, 27], [72, 38], [74, 51], [73, 64], [70, 76], [27, 38], [26, 51], [27, 64], [30, 76], [40, 84], [60, 84]], 9.5);
+    case 'pony': return P('M62 32 C84 30 90 58 80 86 C78 66 72 52 60 42 Z', hc);
+    case 'bun': return C(50, 21, 9, hc);
+  }
+  return '';
+}
+function hairFront(h, hc) {
+  const curls = (pts, r) => pts.map(([x, y]) => C(x, y, r, hc, 'stroke-width:4.4')).join('') + pts.map(([x, y]) => C(x, y, r, hc, NS)).join('');
+  switch (h) {
+    case 'short': return P('M31 50 C28 28 38 23 50 23 C62 23 72 28 69 50 C68 42 64 38 60 36 C52 40 42 38 36 38 C34 42 32 46 31 50 Z', hc);
+    case 'spiky': return P('M31 47 L29 33 L36 35 L37 24 L45 30 L50 20 L55 29 L63 23 L64 34 L71 32 L69 47 C64 37 36 37 31 47 Z', hc);
+    case 'quiff': return P('M31 48 C29 34 34 28 40 26 C44 16 62 12 68 22 C72 28 70 40 69 48 C66 38 58 34 50 34 C42 34 34 38 31 48 Z', hc);
+    case 'pixie': return P('M30 52 C27 26 50 18 66 26 C72 30 71 40 69 46 C62 34 50 36 42 40 C36 44 32 48 30 52 Z', hc);
+    case 'long': case 'wavy': return P('M31 52 C29 28 40 23 50 23 C60 23 71 28 69 52 C66 40 58 32 50 30 C46 34 38 38 31 52 Z', hc);
+    case 'straight': return P('M31 54 C29 28 40 23 50 23 C60 23 71 28 69 54 C67 38 56 30 50 28 C44 30 33 38 31 54 Z', hc);
+    case 'curly': return curls([[36, 34], [44, 28], [52, 26], [60, 28], [66, 34]], 6.5);
+    case 'pony': return P('M31 50 C29 28 40 23 50 23 C60 23 71 28 69 50 C64 36 40 34 31 50 Z', hc) + C(63, 37, 2.4, 'var(--red)', 'stroke-width:1.4');
+    case 'bun': return P('M31 50 C29 28 40 23 50 23 C60 23 71 28 69 50 C64 36 40 34 31 50 Z', hc);
+    case 'braids': {
+      let s = P('M30 50 C28 24 72 24 70 50 L68 40 C60 42 40 42 32 40 Z', hc);
+      for (const x of [28, 72]) {
+        for (let y = 54; y <= 89; y += 7) s += E(x, y, 4.6, 4.2, hc);
+        s += C(x, 94, 2.2, 'var(--red)', 'stroke-width:1.4');
+      }
+      return s;
+    }
+    case 'bald': return L('M40 31 Q46 28 52 29', 'stroke:var(--eye-white);stroke-width:2.6');
+  }
+  return '';
+}
+function eyes(kind, ec) {
+  const at = (fn) => fn(42) + fn(58);
+  switch (kind) {
+    case 'color': return at(x => E(x, 50, 4.4, 2.9, 'var(--eye-white)', 'stroke-width:1.4') + C(x, 50, 2.4, ec, NS) + C(x, 50, 1, 'var(--pi)', NS));
+    case 'happy': return at(x => L(`M${x - 3.5} 51.5 Q${x} 46.5 ${x + 3.5} 51.5`));
+    case 'closed': return at(x => L(`M${x - 3.5} 50 Q${x} 53 ${x + 3.5} 50`));
+    case 'wide': return at(x => C(x, 50, 3.8, 'var(--eye-white)', 'stroke-width:1.5') + C(x, 50, 1.7, 'var(--pi)', NS));
+    case 'sleepy': return at(x => L(`M${x - 4} 50 L${x + 4} 50`) + P(`M${x - 2.6} 50 Q${x} 54 ${x + 2.6} 50 Z`, 'var(--pi)', 'stroke-width:1'));
+    case 'side': return at(x => E(x, 50, 4.2, 2.8, 'var(--eye-white)', 'stroke-width:1.4') + C(x + 2.2, 50, 1.4, 'var(--pi)', NS));
+    case 'goofy': return C(42, 50, 4.6, 'var(--eye-white)', 'stroke-width:1.5') + C(43.5, 51, 1.8, 'var(--pi)', NS) + C(58, 50, 2.6, 'var(--eye-white)', 'stroke-width:1.5') + C(57, 49, 1.1, 'var(--pi)', NS);
+  }
+  return at(x => C(x, 50, 2.3, 'var(--pi)', NS));
+}
+function brows(kind) {
+  switch (kind) {
+    case 'angry': return L('M37.5 42.5 L46 45.5') + L('M62.5 42.5 L54 45.5');
+    case 'worried': return L('M38 45.5 L46 42.5') + L('M62 45.5 L54 42.5');
+    case 'up': return L('M38 42 Q42 39 46 42') + L('M54 42 Q58 39 62 42');
+    case 'uni': return L('M37 44.5 Q44 40.5 50 44 Q56 40.5 63 44.5', 'stroke-width:3.2');
+    case 'none': return '';
+  }
+  return L('M38 44.5 Q42 42.5 46 44.5') + L('M54 44.5 Q58 42.5 62 44.5');
+}
+function mouth(kind) {
+  switch (kind) {
+    case 'big': return P('M42 62.5 Q50 74 58 62.5 Z', 'var(--pi)', 'stroke-width:1.6') + P('M43.4 63.3 L56.6 63.3 Q56 65.4 54.6 66 L45.4 66 Q44 65.4 43.4 63.3 Z', 'var(--eye-white)', NS);
+    case 'laugh': return P('M41 61.5 Q50 76 59 61.5 Z', 'var(--pi)', 'stroke-width:1.6') + P('M45 69.5 Q50 66 55 69.5 Q50 73 45 69.5 Z', 'var(--red)', NS) + P('M42.4 62.3 L57.6 62.3 L56.4 64.6 L43.6 64.6 Z', 'var(--eye-white)', NS);
+    case 'frown': return L('M43 68 Q50 62.5 57 68');
+    case 'flat': return L('M44 66 L56 66');
+    case 'o': return E(50, 66, 3, 3.8, 'var(--pi)', 'stroke-width:1.4');
+    case 'yawn': return E(50, 66, 4.5, 6, 'var(--pi)', 'stroke-width:1.4');
+    case 'wavy': return L('M41 66 Q43.25 63.5 45.5 66 Q47.75 68.5 50 66 Q52.25 63.5 54.5 66 Q56.75 68.5 59 66');
+    case 'zip': return L('M40 65.5 L60 65.5', 'stroke-width:2.6') + [42.5, 46, 49.5, 53, 56.5].map(x => L(`M${x} 63 L${x} 68`, 'stroke-width:1.4')).join('') + R(59, 63.5, 4, 6, 'var(--gold)', 'stroke-width:1.2', 1);
+    case 'tongue': return L('M43 64 Q50 70 57 64') + P('M47 66.2 Q50 75 53 66.2 Z', 'var(--red)', 'stroke-width:1.6');
+    case 'smirk': return L('M44 66.5 Q52 68 57 62.5');
+    case 'crooked': return L('M42 64 L46 66.5 L50 63.5 L54 67 L58 64') + R(47.6, 64.6, 3, 3.4, 'var(--eye-white)', 'stroke-width:1.2');
+  }
+  return L('M43 64 Q50 70 57 64');
+}
+const BEARD = hc => P('M31 52 C31 76 42 83 50 83 C58 83 69 76 69 52 C67 60 64 66 58 68.5 C54 64.5 46 64.5 42 68.5 C36 66 33 60 31 52 Z', hc);
+const MUSTACHE = hc => P('M42 61.6 C45.5 58.4 48.6 58.8 50 60.8 C51.4 58.8 54.5 58.4 58 61.6 C60 62.6 62.5 61 62.6 58.6 C63.4 62.8 59 64.6 55 63 Q51 61.8 50 62.2 Q49 61.8 45 63 C41 64.6 36.6 62.8 37.4 58.6 C37.5 61 40 62.6 42 61.6 Z', hc);
+const GLASSES = (dark = false) => C(42, 50, 6.6, dark ? 'var(--pi)' : 'rgb(255 255 255 / .35)') + C(58, 50, 6.6, dark ? 'var(--pi)' : 'rgb(255 255 255 / .35)') + L('M48.6 49.5 Q50 48 51.4 49.5') + L('M35.4 48.5 L31 47') + L('M64.6 48.5 L69 47');
+const EARRINGS = C(31, 60.5, 2.8, 'none', 'stroke:var(--gold);stroke-width:1.8') + C(69, 60.5, 2.8, 'none', 'stroke:var(--gold);stroke-width:1.8') + C(31, 64.5, 1.8, 'var(--gold)', 'stroke-width:1') + C(69, 64.5, 1.8, 'var(--gold)', 'stroke-width:1');
+const NECKLACE = L('M39 81 Q50 93 61 81', 'stroke-width:1.4') + [[40.5, 84], [44.5, 87.6], [55.5, 87.6], [59.5, 84]].map(([x, y]) => C(x, y, 1.7, 'var(--gold)', 'stroke-width:1')).join('') + C(50, 91.5, 3.2, 'var(--e-blue)', 'stroke-width:1.4');
+const BOWTIE = P('M43 84 L50 88 L43 92 Z', 'var(--red)', 'stroke-width:1.6') + P('M57 84 L50 88 L57 92 Z', 'var(--red)', 'stroke-width:1.6') + C(50, 88, 2, 'var(--red)', 'stroke-width:1.4');
+const COLLAR = P('M40 80 L50 87 L46 92 Z', 'var(--eye-white)', 'stroke-width:1.6') + P('M60 80 L50 87 L54 92 Z', 'var(--eye-white)', 'stroke-width:1.6');
+
+function face(o = {}) {
+  const hc = `var(--h-${o.hc || 'black'})`;
+  let s = '';
+  s += P('M10 100 C12 86 26 82 40 80 L60 80 C74 82 88 86 90 100 Z', o.shirt || 'var(--cl2)');
+  s += o.under || '';
+  s += hairBack(o.hair, hc);
+  s += P('M43 70 L43 82 Q50 86 57 82 L57 70', 'var(--skin)');
+  s += E(31, 52, 3.5, 5, 'var(--skin)') + E(69, 52, 3.5, 5, 'var(--skin)');
+  s += E(50, 50, 19, 23, 'var(--skin)');
+  if (o.blush) s += E(37.5, 59, 3.6, 2.1, 'var(--pink)', NS) + E(62.5, 59, 3.6, 2.1, 'var(--pink)', NS);
+  if (o.beard) s += BEARD(hc);
+  s += eyes(o.eyes, o.ec);
+  s += brows(o.brows || (o.hair === 'bald' ? 'normal' : o.brows));
+  if (o.nose === 'long') s += P('M49 54 L84 56.5 Q86 58.5 84 60 L50 60.5 Z', 'var(--skin)');
+  else if (o.nose === 'big') s += E(50, 57.5, 4.4, 3.8, 'var(--skin)');
+  else s += L('M50 52 Q47.4 58 51 58.6');
+  s += mouth(o.mouth);
+  if (o.mustache) s += MUSTACHE(hc);
+  s += hairFront(o.hair, hc);
+  if (o.glasses) s += GLASSES(o.glasses === 'sun');
+  if (o.earrings) s += EARRINGS;
+  if (o.necklace) s += NECKLACE;
+  s += o.extra || '';
+  return svg(s);
+}
+
+/* ---- sylwetka ---- */
+function figure(o = {}) {
+  const x = o.x ?? 50, H = o.H ?? 72, bw = o.bw ?? 20, top = 96 - H, hr = H * .12, hy = top + hr, sh = hy + hr + 1.5, tb = top + H * .6;
+  const shirt = o.shirt || 'var(--cl2)', aw = Math.max(3.2, bw * .2), lw = Math.max(4, bw * .36), gap = Math.max(1, bw * .06);
+  const limb = (d, w, col) => band(d, w, col);
+  let s = '';
+  if (o.pack) s += R(x - bw / 2 - 5, sh + 3, 7, (tb - sh) * .75, 'var(--red)', 'stroke-width:1.8', 2);
+  s += R(x - gap - lw, tb - 2, lw, 96 - tb + 2, 'var(--pants)', '', 1) + R(x + gap, tb - 2, lw, 96 - tb + 2, 'var(--pants)', '', 1);
+  for (const sd of [-1, 1]) {
+    const ax = x + sd * (bw / 2 + aw / 2 - .5);
+    if (o.flex) {
+      const ex = x + sd * (bw / 2 + 9);
+      s += limb(`M${ax} ${sh + 3} L${ex} ${sh + 4} L${ex} ${sh - 7}`, aw, shirt);
+      s += C(ex + sd * -.4, sh - 2.5, aw * .75, 'var(--skin)', 'stroke-width:1.6');
+      s += C(ex, sh - 9, aw * .7, 'var(--skin)', 'stroke-width:1.6');
+    } else {
+      const hx = x + sd * (bw / 2 + aw / 2 + (o.droop ? .4 : 1.6));
+      s += limb(`M${ax} ${sh + 3} L${hx} ${tb - 1}`, aw, shirt);
+      s += C(hx, tb + aw * .3, aw * .55, 'var(--skin)', 'stroke-width:1.4');
+    }
+  }
+  if (o.fat) s += E(x, (sh + tb) / 2 + 2, bw / 2, (tb - sh) / 2 + 4, shirt);
+  else s += P(`M${x - bw / 2} ${tb} L${x - bw / 2} ${sh + 4} Q${x - bw / 2} ${sh} ${x - bw / 2 + 4} ${sh} L${x + bw / 2 - 4} ${sh} Q${x + bw / 2} ${sh} ${x + bw / 2} ${sh + 4} L${x + bw / 2} ${tb} Z`, shirt);
+  if (o.pack) s += L(`M${x - bw / 2 + 2} ${sh + 1} L${x - bw / 2 + 4} ${tb - 4}`, 'stroke:var(--red);stroke-width:2.4');
+  s += C(x, hy, hr, 'var(--skin)');
+  if (o.hc) s += P(`M${x - hr} ${hy} C${x - hr} ${hy - hr * 1.36} ${x + hr} ${hy - hr * 1.36} ${x + hr} ${hy} C${x + hr * .6} ${hy - hr * .55} ${x - hr * .6} ${hy - hr * .55} ${x - hr} ${hy} Z`, `var(--h-${o.hc})`);
+  s += C(x - hr * .38, hy + hr * .05, Math.max(.8, hr * .13), 'var(--pi)', NS) + C(x + hr * .38, hy + hr * .05, Math.max(.8, hr * .13), 'var(--pi)', NS);
+  if (o.beard) s += P(`M${x - hr * .8} ${hy + hr * .35} Q${x} ${hy + hr * 1.5} ${x + hr * .8} ${hy + hr * .35} Q${x} ${hy + hr * .8} ${x - hr * .8} ${hy + hr * .35} Z`, 'var(--h-grey)', 'stroke-width:1.4');
+  else s += L(`M${x - hr * .35} ${hy + hr * .42} Q${x} ${hy + hr * .72} ${x + hr * .35} ${hy + hr * .42}`, 'stroke-width:1.5');
+  if (o.cane) s += band(`M${x + bw / 2 + 4} ${tb} L${x + bw / 2 + 6} 96 M${x + bw / 2 + 4} ${tb} Q${x + bw / 2 + 4} ${tb - 4} ${x + bw / 2 + 8} ${tb - 3}`, 2, 'var(--h-brown)');
+  if (o.weight) s += L(`M${x + 12} 92 L${x + 30} 92`, 'stroke-width:3') + R(x + 9, 86, 5, 12, 'var(--pi)', '', 1) + R(x + 28, 86, 5, 12, 'var(--pi)', '', 1);
+  s += L('M4 96 L96 96', 'stroke:var(--plate-line);stroke-width:1.6');
+  return o.faded ? `<g opacity=".28">${s}</g>` : s;
+}
+
+/* ---- oczy ---- */
+function eyePair(color) {
+  const eye = cx => P(`M${cx - 18} 54 Q${cx} 36 ${cx + 18} 54 Q${cx} 68 ${cx - 18} 54 Z`, 'var(--eye-white)') + C(cx, 53, 8, color, 'stroke-width:1.6') + C(cx, 53, 3.6, 'var(--pi)', NS) + C(cx + 2.6, 50.4, 1.6, 'var(--eye-white)', NS) +
+    L(`M${cx - 19} 37 Q${cx} 27 ${cx + 19} 35`, 'stroke-width:4.4') + [-12, -6, 0, 6, 12].map(d => L(`M${cx + d} ${45.5 + Math.abs(d) * .35} L${cx + d * 1.2} ${41 + Math.abs(d) * .3}`, 'stroke-width:1.5')).join('');
+  return svg(eye(27) + eye(73));
+}
+
+/* ---- ubrania ---- */
+const SLEEVE = 'M32 18 L18 28 C14 44 12 66 12 82 L24 84 C25 66 27 50 30 42 Z';
+const sleeves = (f = CL) => P(SLEEVE, f) + M(P(SLEEVE, f)) + L('M13 76 L24.6 78') + M(L('M13 76 L24.6 78'));
+const PANTS = 'M28 10 L72 10 L76 92 L56 92 L50 32 L44 92 L24 92 Z';
+const MITT = P('M28 78 L27 44 C26 28 50 26 50 42 L50 50 C54 44 62 46 60 54 L52 72 L52 78 Z', 'var(--cl2)') + P('M26 78 L54 78 L54 92 L26 92 Z', 'var(--cl2)') + [31, 36, 41, 46, 51].map(x => L(`M${x} 81 L${x} 89`, 'stroke-width:1.4')).join('') + L('M30 56 L48 56 M30 64 L48 64', 'stroke-width:1.4');
+const BOOT = P('M24 18 L46 18 L46 66 C46 70 52 72 58 74 C66 76 68 82 68 88 L24 88 Z', 'var(--cl2)') + L('M24 82 L68 82') + L('M24 26 L46 26') + FLOWER(35, 46, 3.4, 'var(--cl)');
+const SANDAL = P('M30 14 C42 12 48 22 46 42 C44 58 48 78 40 88 C32 94 22 88 24 72 C26 54 20 28 30 14 Z', 'var(--cl)') + band('M24 30 Q35 24 47 30', 4, 'var(--h-brown)') + band('M24 64 Q34 58 45 63', 4, 'var(--h-brown)') + band('M35 26 L34 61', 3, 'var(--h-brown)');
+const FLIPFLOP = P('M32 12 C44 12 48 24 46 40 C44 56 48 76 40 88 C32 94 22 88 24 72 C26 54 20 26 32 12 Z', 'var(--cl)') + band('M35 22 L26 46', 3.4, 'var(--e-blue)') + band('M35 22 L45.6 45', 3.4, 'var(--e-blue)') + C(35, 22, 2.2, 'var(--e-blue)', 'stroke-width:1.4');
+const SOCK = P('M38 12 L58 12 L58 56 C58 62 64 66 72 68 C84 70 86 86 76 88 L50 88 C38 88 36 80 38 72 Z') + L('M38 22 L58 22') + [42, 46, 50, 54].map(x => L(`M${x} 13 L${x} 21`, 'stroke-width:1.4')).join('') + L('M38.4 66 C44 66 48 72 46.5 87', 'stroke-width:1.6') + L('M72.5 68.3 C67 74 68.5 83 72 88', 'stroke-width:1.6');
+const lace = (y, x1, x2) => { let d = `M${x1} ${y}`; for (let x = x1; x < x2; x += 8) d += ` Q${x + 4} ${y - 5} ${x + 8} ${y}`; return L(d, 'stroke-width:1.6'); };
+const dots = (pts, col = 'var(--pi)', r = 1.6) => pts.map(([x, y]) => C(x, y, r, col, NS)).join('');
+
+const CLOTHES = {
+  gorra: P('M20 64 C18 36 40 28 52 30 C66 32 76 44 76 64 Z', 'var(--cl2)') + P('M70 62 C80 60 94 62 96 68 C92 72 76 72 66 68 Z', 'var(--cl2)') + L('M51 30 C42 40 40 52 42 64') + L('M52 30 C60 42 62 52 62 64') + C(51.5, 30, 2.6, 'var(--cl2)') + L('M20 64 L74 64'),
+  botas: T(20, -8, BOOT) + T(-6, 6, BOOT),
+  saco: sleeves() + P('M34 18 L44 16 L50 46 L56 16 L66 18 L70 90 L30 90 Z') + L('M50 46 L50 90') + dots([[53.5, 54], [53.5, 64], [53.5, 74]], 'var(--pi)', 1.8) + L('M30.4 84 L69.6 84'),
+  guantes: T(-12, 0, MITT) + T(12, 0, M(MITT)),
+  camisa: sleeves() + P('M32 18 L42 15 L50 24 L58 15 L68 18 L70 90 L30 90 Z') + P('M42 15 L40 27 L50 24 Z') + P('M58 15 L60 27 L50 24 Z') + L('M50 24 L50 90') + dots([[53, 34], [53, 46], [53, 58], [53, 70], [53, 82]], 'var(--pi)', 1.4) + P('M57 36 L65 36 L65 46 L57 46 Z'),
+  pantalones_cortos: P('M24 22 L76 22 L80 72 L55 74 L50 46 L45 74 L20 72 Z', 'var(--cl2)') + L('M24 31 L76 31') + L('M34 22 L34 31 M66 22 L66 31') + L('M50 31 L50 44') + C(50, 26.5, 2) + P('M24 48 L36 48 L36 62 L25 62 Z', 'var(--cl2)') + M(P('M24 48 L36 48 L36 62 L25 62 Z', 'var(--cl2)')),
+  falda: P('M34 31 L66 31 L84 80 Q50 90 16 80 Z', 'var(--pink)') + P('M34 22 L66 22 L66 31 L34 31 Z', 'var(--pink)') + L('M42 31 L34 85') + L('M50 31 L50 86.5') + L('M58 31 L66 85') + L('M19 73 Q50 82 81 73', 'stroke-width:1.6') + C(62, 26.5, 1.5, 'var(--pi)', NS),
+  vestido: P('M38 12 L42 12 L44 22 L56 22 L58 12 L62 12 L63 30 Q65 40 60 46 L80 88 Q50 96 20 88 L40 46 Q35 40 37 30 Z', 'var(--cl)') + L('M40 46 L60 46') + L('M44 22 Q50 28 56 22') + P('M50 46 L43 41 L43 51 Z', 'var(--pink)', 'stroke-width:1.6') + P('M50 46 L57 41 L57 51 Z', 'var(--pink)', 'stroke-width:1.6') + C(50, 46, 1.8, 'var(--pink)', 'stroke-width:1.4') + L('M22 84 Q26 88 30 85 Q34 89 38 86 Q42 90 46 86 Q50 90 54 86 Q58 90 62 86 Q66 89 70 85 Q74 88 78 84', 'stroke-width:1.6') + FLOWER(32, 72, 2.4) + FLOWER(64, 66, 2.4) + FLOWER(48, 78, 2.4),
+  chaqueta: sleeves('var(--cl2)') + P('M33 18 L43 14 L50 18 L57 14 L67 18 L70 86 L30 86 Z', 'var(--cl2)') + P('M40 8 L60 8 L60 17 L50 22 L40 17 Z', 'var(--cl2)') + L('M50 22 L50 86') + R(51, 26, 3, 6, 'var(--gold)', 'stroke-width:1.2', 1) + L('M36 58 L40 72') + M(L('M36 58 L40 72')) + L('M30.4 80 L69.6 80'),
+  bufanda: P('M26 20 C26 42 74 42 74 20 L66 20 C66 32 34 32 34 20 Z', 'var(--red)') + P('M58 34 L64 74 L77 70 L67 31 Z', 'var(--red)') + P('M37 34 L29 84 L43 86 L49 35 Z', 'var(--red)') + L('M35.4 46 L47.6 47', 'stroke:var(--cl);stroke-width:3') + L('M33.4 58 L46 59.4', 'stroke:var(--cl);stroke-width:3') + L('M31.4 70 L44.6 71.8', 'stroke:var(--cl);stroke-width:3') + L('M60.4 50 L71 47', 'stroke:var(--cl);stroke-width:3') + L('M62.4 62 L74 58.5', 'stroke:var(--cl);stroke-width:3') + [30, 34, 38, 42].map(x => L(`M${x} ${84.6 + (x - 30) * .12} L${x - .6} 93`, 'stroke-width:1.6')).join('') + [65, 69, 73, 76].map(x => L(`M${x} ${73.5 - (x - 65) * .3} L${x + .4} ${80 - (x - 65) * .3}`, 'stroke-width:1.6')).join(''),
+  pantalones: P(PANTS, 'var(--cl2)') + L('M28 18 L72 18') + L('M50 18 L50 30') + L('M30 18 Q36 26 40 18') + M(L('M30 18 Q36 26 40 18')) + C(50, 14, 1.8),
+  banador: P('M24 26 L76 26 L79 68 L55 70 L50 50 L45 70 L21 68 Z', 'var(--e-light)') + L('M24 34 L76 34') + L('M48 34 Q46 42 44 45 M52 34 Q54 42 56 45', 'stroke-width:1.6') + FLOWER(32, 46, 3) + FLOWER(66, 52, 3) + FLOWER(31, 60, 2.6) + FLOWER(70, 41, 2.4) + FLOWER(41, 41, 2.2),
+  sandalias: T(-14, 2, SANDAL) + T(14, -2, M(SANDAL)),
+  bragas: P('M18 30 L82 30 L78 44 C68 50 60 62 57 78 L43 78 C40 62 32 50 22 44 Z', 'var(--pink)') + lace(30, 18, 82) + P('M50 37 L45 34 L45 40 Z', 'var(--red)', 'stroke-width:1.3') + P('M50 37 L55 34 L55 40 Z', 'var(--red)', 'stroke-width:1.3'),
+  tacones: P('M10 82 Q10 70 24 68 Q38 66 50 74 L74 48 Q84 44 86 52 L84 60 L82 94 L77 94 L77 64 L58 86 Q50 92 40 90 L14 90 Q10 89 10 82 Z', 'var(--red)') + L('M14 87 L42 87.5', 'stroke-width:1.6') + P('M24 70 L19 66 L19 74 Z', 'var(--cl)', 'stroke-width:1.4') + P('M24 70 L29 66 L29 74 Z', 'var(--cl)', 'stroke-width:1.4') + C(24, 70, 1.6, 'var(--cl)', 'stroke-width:1.2'),
+  calzoncillos: P('M16 28 L84 28 L82 44 C72 52 62 60 60 78 L40 78 C38 60 28 52 18 44 Z', 'var(--cl2)') + P('M16 28 L84 28 L83.4 37 L16.6 37 Z', 'var(--cl)') + L('M50 37 L50 56', 'stroke-width:1.6') + L('M42 40 Q45 54 50 57 Q55 54 58 40', 'stroke-width:1.6'),
+  uniforme: sleeves('var(--pants)') + P('M32 18 L44 14 L50 22 L56 14 L68 18 L70 90 L30 90 Z', 'var(--pants)') + P('M44 14 L50 22 L56 14 L50 50 Z', 'var(--eye-white)') + P('M48 23 L52 23 L54 44 L50 50 L46 44 Z', 'var(--red)', 'stroke-width:1.6') + L('M44 14 L39 34 L50 52 L61 34 L56 14', 'stroke:var(--cl2)') + P('M58 40 L66 40 L66 46 Q62 51 58 46 Z', 'var(--gold)', 'stroke-width:1.4') + C(50, 62, 1.8, 'var(--gold)', NS) + C(50, 72, 1.8, 'var(--gold)', NS) + L('M34 74 L44 74', 'stroke:var(--cl2)') + M(L('M34 74 L44 74', 'stroke:var(--cl2)')),
+  zapatos: P('M8 72 C8 62 22 58 34 56 L48 46 Q56 44 62 50 C68 50 76 46 84 48 C92 50 94 60 92 70 L92 74 L10 76 Q8 74 8 72 Z', 'var(--h-brown)') + P('M8 73 L92 71 L92 79 Q50 83 10 81 Z', 'var(--pi)') + L('M40 54 L49 60 M44 51 L53 57 M48 48 L57 54', 'stroke:var(--cl);stroke-width:1.8') + L('M70 51 C66 58 68 66 74 71', 'stroke-width:1.6'),
+  calcetines: T(14, -4, SOCK) + T(-10, 4, SOCK),
+  gafas_de_sol: C(30, 52, 15, 'var(--pi)') + C(70, 52, 15, 'var(--pi)') + L('M45 48 Q50 43 55 48', 'stroke-width:3') + L('M15 48 L4 40', 'stroke-width:3') + L('M85 48 L96 40', 'stroke-width:3') + L('M22 47 Q25 42 31 42', 'stroke:var(--cl);stroke-width:2.4') + L('M62 47 Q65 42 71 42', 'stroke:var(--cl);stroke-width:2.4'),
+  chanclas: T(-14, 2, FLIPFLOP) + T(14, -2, M(FLIPFLOP)),
+  gorro: P('M22 68 C22 36 78 36 78 68 Z', 'var(--e-light)') + L('M26 54 Q50 43 74 54', 'stroke:var(--cl);stroke-width:4') + L('M23.6 61 Q50 52 76.4 61', 'stroke:var(--cl);stroke-width:4') + P('M18 66 L82 66 L82 86 L18 86 Z', 'var(--e-light)') + [24, 30, 36, 42, 48, 54, 60, 66, 72, 78].map(x => L(`M${x} 69 L${x} 83`, 'stroke-width:1.4')).join('') + C(50, 30, 10, 'var(--cl)') + L('M44 26 L47 30 M52 24 L54 28 M56 32 L52 34 M45 35 L48 33', 'stroke-width:1.4'),
+  camiseta: P('M34 16 Q50 26 66 16 L86 28 L78 44 L70 40 L70 88 L30 88 L30 40 L22 44 L14 28 Z', 'var(--cl)') + L('M36.5 17.6 Q50 30 63.5 17.6'),
+  bikini: L('M32 20 Q40 8 50 10 Q60 8 68 20', 'stroke-width:1.6') + P('M32 20 L46 44 L20 46 Z', 'var(--gold)') + P('M68 20 L80 46 L54 44 Z', 'var(--gold)') + L('M46 44 Q50 42 54 44', 'stroke-width:1.6') + L('M20 46 L9 48 M80 46 L91 48', 'stroke-width:1.6') + FLOWER(32, 38, 2.4, 'var(--red)') + FLOWER(68, 38, 2.4, 'var(--red)') + P('M24 60 L76 60 L70 66 C62 70 56 78 54 86 L46 86 C44 78 38 70 30 66 Z', 'var(--gold)') + L('M24 60 Q18 58 16 62 Q18 66 24 60 M24 60 L18 70', 'stroke-width:1.5') + M(L('M24 60 Q18 58 16 62 Q18 66 24 60 M24 60 L18 70', 'stroke-width:1.5')) + FLOWER(50, 68, 2.4, 'var(--red)'),
+  pijama: T(23, 0, sleeves('var(--e-light)') + P('M32 18 Q50 26 68 18 L70 90 L30 90 Z', 'var(--e-light)') + [[40, 36], [58, 46], [44, 62], [60, 76], [20, 50], [80, 60], [38, 82]].map(([x, y]) => STAR(x, y, 4.6)).join(''), .54, 's2') + T(24, 46, P(PANTS, 'var(--e-light)') + L('M28 18 L72 18') + [[38, 30], [62, 36], [34, 56], [66, 62], [32, 80], [68, 84]].map(([x, y]) => STAR(x, y, 4.6)).join(''), .52, 's2'),
+  vaqueros: P(PANTS, 'var(--denim)') + L('M28 18 L72 18') + L('M50 18 L50 30') + L('M30 18 Q36 27 41 18', 'stroke-dasharray:2 2;stroke-width:1.4') + M(L('M30 18 Q36 27 41 18', 'stroke-dasharray:2 2;stroke-width:1.4')) + L('M27.4 22 L25.4 90 M72.6 22 L74.6 90', 'stroke:var(--gold);stroke-dasharray:2 2;stroke-width:1.2') + C(50, 14, 1.8, 'var(--gold)') + L('M60 20 L66 20 L66 26 L60 26 Z', 'stroke-width:1.2'),
+  deportivas: P('M8 70 C8 58 18 52 28 50 L44 40 Q52 36 58 42 L66 50 C76 52 88 56 92 64 L92 72 L8 74 Z', 'var(--cl)') + P('M6 70 L94 68 L94 78 Q50 84 8 80 Z', 'var(--cl2)') + [20, 32, 44, 56, 68, 80].map(x => L(`M${x} 74 L${x} 79`, 'stroke-width:1.2')).join('') + L('M42 45 L52 51 M46 42 L56 48 M50 40 L59 45', 'stroke-width:1.8') + band('M28 63 Q50 50 74 60', 3.6, 'var(--e-blue)') + L('M8 66 Q16 60 24 62', 'stroke-width:1.6') + P('M84 55 L92 62 L92 68 L84 66 Z', 'var(--e-blue)', 'stroke-width:1.6'),
+  jersey: sleeves('var(--e-green)') + P('M32 18 Q50 26 68 18 L70 86 L30 86 Z', 'var(--e-green)') + L('M34 17 Q50 31 66 17', 'stroke-width:4') + L('M30.6 48 L36 42 L42 48 L48 42 L54 48 L60 42 L66 48 L69.6 44', 'stroke:var(--cl);stroke-width:2.6') + P('M30 80 L70 80 L70 88 L30 88 Z', 'var(--e-green)') + [34, 38, 42, 46, 50, 54, 58, 62, 66].map(x => L(`M${x} 81.5 L${x} 86.5`, 'stroke-width:1.2')).join(''),
+};
+
+/* ---- dodatki do twarzy ---- */
+const HALO = E(50, 16, 15, 4.4, 'none', 'stroke:var(--gold);stroke-width:3.4');
+const HORNS = P('M35 33 L29 14 L44 27 Z', 'var(--red)') + P('M65 33 L71 14 L56 27 Z', 'var(--red)');
+const SPARK = STAR(80, 22, 6) + STAR(20, 30, 4.4) + STAR(86, 42, 3.4);
+const BULB = C(82, 18, 8, 'var(--gold)') + R(78.5, 25.5, 7, 5, 'var(--cl2)', 'stroke-width:1.6', 1) + L('M82 4 L82 1 M71 9 L68.5 6.5 M93 9 L95.5 6.5 M70 19 L66.5 19 M94 19 L97.5 19', 'stroke-width:1.8') + L('M80 20 L82 15 L84 20', 'stroke-width:1.4');
+const ZZZ = TX(78, 26, 'Z', 14) + TX(88, 15, 'z', 11) + TX(95, 7, 'z', 8);
+const PARTY = P('M38 29 L50 1 L62 29 Z', 'var(--h-dyed)') + C(45, 22, 1.8, 'var(--gold)', NS) + C(53, 14, 1.8, 'var(--gold)', NS) + C(55, 24, 1.8, 'var(--gold)', NS) + C(50, 2, 3.6, 'var(--gold)', 'stroke-width:1.6') + R(14, 18, 4, 4, 'var(--e-blue)', NS) + R(84, 28, 4, 4, 'var(--red)', NS) + R(20, 40, 3, 3, 'var(--e-green)', NS) + R(80, 10, 3, 3, 'var(--e-green)', NS);
+const HARDHAT = P('M29 40 C29 16 71 16 71 40 Z', 'var(--gold)') + R(24, 38, 52, 5.5, 'var(--gold)', '', 2) + L('M50 18 L50 38', 'stroke-width:3');
+const PHONES = L('M29 50 C27 16 73 16 71 50', 'stroke-width:4.2') + R(24.5, 43, 9, 16, 'var(--e-blue)', '', 3.5) + R(66.5, 43, 9, 16, 'var(--e-blue)', '', 3.5);
+const BOOK = P('M30 82 L50 86 L70 82 L70 100 L50 100 L30 100 Z', 'var(--e-blue)') + L('M50 86 L50 100');
+const QMARKS = TX(82, 26, '?', 18) + TX(19, 24, '?', 13) + TX(90, 46, '?', 10);
+const GIFT = R(34, 80, 32, 20, 'var(--red)') + R(47.5, 80, 5, 20, 'var(--gold)', 'stroke-width:1.4') + P('M50 80 C42 70 36 76 44 80 Z', 'var(--gold)', 'stroke-width:1.6') + P('M50 80 C58 70 64 76 56 80 Z', 'var(--gold)', 'stroke-width:1.6');
+const MONEYBAG = P('M38 100 C32 88 38 80 45 78 L42 73 L58 73 L55 78 C62 80 68 88 62 100 Z', 'var(--gold)') + L('M44 78 L56 78', 'stroke-width:2.6') + TX(50, 96, '€', 13) + E(37, 90, 5, 4, 'var(--skin)', 'stroke-width:1.6') + E(63, 90, 5, 4, 'var(--skin)', 'stroke-width:1.6');
+const STORM = P('M64 22 C60 22 58 18 61 15 C60 9 67 6 71 9 C73 4 82 4 84 10 C90 9 93 15 89 19 C91 22 88 25 84 24 L66 24 C65 24 64 23 64 22 Z', 'var(--e-grey)', 'stroke-width:1.8') + P('M75 25 L71 33 L75 33 L72 41 L80 30 L76 30 L79 25 Z', 'var(--gold)', 'stroke-width:1.3');
+const WAVE = band('M84 100 L88 64', 5, 'var(--cl2)') + C(89, 58, 5.4, 'var(--skin)') + L('M94 48 Q98 53 96 59 M82 48 Q78 52 79 57', 'stroke-width:1.6');
+const CHINHAND = band('M70 100 Q64 88 56 82', 5, 'var(--cl2)') + E(51, 78, 8.5, 4.6, 'var(--skin)');
+const FLOWERHAND = L('M78 98 Q76 84 79 72', 'stroke:var(--e-green);stroke-width:2.6') + P('M78 86 Q70 82 72 78 Q77 79 78 86 Z', 'var(--e-green)', 'stroke-width:1.4') + FLOWER(79, 66, 5.4, 'var(--pink)') + E(77, 92, 5, 4, 'var(--skin)', 'stroke-width:1.6');
+const SHAKE = L('M22 38 L18 42 L22 46 M78 38 L82 42 L78 46', 'stroke-width:1.6') + L('M19 54 L15 58 L19 62 M81 54 L85 58 L81 62', 'stroke-width:1.6');
+const CALM = TX(82, 28, '~', 16) + TX(18, 34, '~', 13) + TX(86, 46, '~', 10);
+
+/* ===== dane ===== */
+const art2indef = { la: 'una', el: 'un', los: 'unos', las: 'unas' };
+const ROPA = [
+  ['gorra', 'la', 'czapka z daszkiem'], ['botas', 'las', 'kozaki, buty zimowe'], ['saco', 'el', 'sweter rozpinany'], ['guantes', 'los', 'rękawiczki'],
+  ['camisa', 'la', 'koszula'], ['pantalones cortos', 'los', 'krótkie spodenki'], ['falda', 'la', 'spódnica'], ['vestido', 'el', 'sukienka'],
+  ['chaqueta', 'la', 'kurtka'], ['bufanda', 'la', 'szalik'], ['pantalones', 'los', 'spodnie'], ['bañador', 'el', 'kąpielówki, strój kąpielowy'],
+  ['sandalias', 'las', 'sandały'], ['bragas', 'las', 'majtki damskie'], ['tacones', 'los', 'buty na obcasie'], ['calzoncillos', 'los', 'majtki męskie'],
+  ['uniforme', 'el', 'mundurek'], ['zapatos', 'los', 'buty'], ['calcetines', 'los', 'skarpetki'], ['gafas de sol', 'las', 'okulary przeciwsłoneczne'],
+  ['chanclas', 'las', 'klapki, japonki'], ['gorro', 'el', 'czapka zimowa'], ['camiseta', 'la', 'koszulka, T-shirt'], ['bikini', 'el', 'bikini'],
+  ['pijama', 'el', 'piżama'], ['vaqueros', 'los', 'dżinsy'], ['deportivas', 'las', 'buty sportowe'], ['jersey', 'el', 'sweter'],
+].map(([es, art, pl], i) => {
+  const key = es.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ /g, '_');
+  return { id: 'r' + (i + 1), deck: 'ropa', es, art, pl, ex: `Lleva ${art2indef[art]} ${es}.`, draw: () => svg(CLOTHES[key]) };
+});
+
+const W = (es, esF, pl, tag, ex, draw) => ({ es, esF, pl, tag, ex, draw });
+const FISICO = [
+  W('guapo', 'guapa', 'przystojny / ładna', 'ser', 'Es guapa.', () => face({ hair: 'curly', hc: 'black', mouth: 'big', blush: true, extra: SPARK })),
+  W('feo', 'fea', 'brzydki / brzydka', 'ser', 'Es feo.', () => face({ hair: 'spiky', hc: 'brown', brows: 'uni', nose: 'big', mouth: 'crooked', eyes: 'goofy', extra: C(61, 60, 1.6, 'var(--h-brown)', NS) + C(38, 39, 1.2, 'var(--h-brown)', NS) })),
+  W('gordo', 'gorda', 'gruby / gruba', 'ser', 'Es gordo.', () => svg(figure({ H: 76, bw: 36, fat: true, hc: 'black' }))),
+  W('delgado', 'delgada', 'szczupły / szczupła', 'ser', 'Es delgado.', () => svg(figure({ H: 76, bw: 12, hc: 'black' }))),
+  W('alto', 'alta', 'wysoki / wysoka', 'ser', 'Es alto.', () => svg(figure({ x: 70, H: 50, bw: 16, hc: 'brown', faded: true }) + figure({ x: 38, H: 88, bw: 18, hc: 'black', shirt: 'var(--cl)' }))),
+  W('bajo', 'baja', 'niski / niska', 'ser', 'Es bajo.', () => svg(figure({ x: 32, H: 88, bw: 18, hc: 'black', faded: true }) + figure({ x: 66, H: 50, bw: 16, hc: 'brown' }))),
+  W('fuerte', '', 'silny / silna', 'ser', 'Es fuerte.', () => svg(figure({ H: 72, bw: 26, flex: true, hc: 'black' }))),
+  W('débil', '', 'słaby / słaba', 'ser', 'Es débil.', () => svg(figure({ x: 38, H: 70, bw: 13, droop: true, hc: 'brown', weight: true }))),
+  W('viejo', 'vieja', 'stary / stara', 'ser', 'Es viejo.', () => svg(figure({ x: 46, H: 72, bw: 20, hc: 'grey', cane: true, beard: true, shirt: 'var(--h-grey)' }))),
+  W('joven', '', 'młody / młoda', 'ser', 'Es joven.', () => svg(figure({ x: 52, H: 62, bw: 18, hc: 'brown', pack: true }))),
+  W('calvo', 'calva', 'łysy / łysa', 'ser', 'Es calvo.', () => face({ hair: 'bald', mouth: 'smile' })),
+  W('moreno', 'morena', 'brunet / brunetka', 'ser', 'Es moreno.', () => face({ hair: 'spiky', hc: 'black' })),
+  W('rubio', 'rubia', 'blondyn / blondynka', 'ser', 'Es rubio.', () => face({ hair: 'spiky', hc: 'blond' })),
+  W('castaño', 'castaña', 'szatyn / szatynka', 'ser', 'Es castaño.', () => face({ hair: 'short', hc: 'brown' })),
+  W('pelirrojo', 'pelirroja', 'rudy / ruda', 'ser', 'Es pelirroja.', () => face({ hair: 'wavy', hc: 'red', blush: true, extra: dots([[40, 57], [44, 58.5], [56, 58.5], [60, 57]], 'var(--h-red)', .9) })),
+  W('rubio', '', 'blond (włosy)', 'tener el pelo', 'Tiene el pelo rubio.', () => face({ hair: 'pixie', hc: 'blond' })),
+  W('moreno', '', 'ciemne, czarne', 'tener el pelo', 'Tiene el pelo moreno.', () => face({ hair: 'short', hc: 'black', beard: true })),
+  W('castaño', '', 'kasztanowe, brązowe', 'tener el pelo', 'Tiene el pelo castaño.', () => face({ hair: 'long', hc: 'brown' })),
+  W('blanco / gris', '', 'siwe', 'tener el pelo', 'Tiene el pelo blanco.', () => face({ hair: 'short', hc: 'grey', extra: L('M40 58 Q42 59.5 44 58 M56 58 Q58 59.5 60 58', 'stroke-width:1.2') })),
+  W('teñido', '', 'farbowane', 'tener el pelo', 'Tiene el pelo teñido.', () => face({ hair: 'quiff', hc: 'dyed', extra: L('M44 22 Q54 18 62 22', 'stroke:var(--pink);stroke-width:3') })),
+  W('corto', '', 'krótkie', 'tener el pelo', 'Tiene el pelo corto.', () => face({ hair: 'pixie', hc: 'black', earrings: true })),
+  W('largo', '', 'długie', 'tener el pelo', 'Tiene el pelo largo.', () => face({ hair: 'long', hc: 'blond' })),
+  W('liso', '', 'proste', 'tener el pelo', 'Tiene el pelo liso.', () => face({ hair: 'straight', hc: 'black' })),
+  W('rizado', '', 'kręcone', 'tener el pelo', 'Tiene el pelo rizado.', () => face({ hair: 'curly', hc: 'black' })),
+  W('ondulado', '', 'falowane', 'tener el pelo', 'Tiene el pelo ondulado.', () => face({ hair: 'wavy', hc: 'brown' })),
+  W('una sonrisa bonita', '', 'ładny uśmiech', 'tener', 'Tiene una sonrisa bonita.', () => face({ hair: 'wavy', hc: 'black', mouth: 'big', extra: STAR(64, 66, 3.4) })),
+  W('bigote', '', 'wąsy', 'tener', 'Tiene bigote.', () => face({ hair: 'quiff', hc: 'black', mustache: true, mouth: 'flat', under: COLLAR + BOWTIE, shirt: 'var(--cl)' })),
+  W('gafas', '', 'okulary', 'llevar', 'Lleva gafas.', () => face({ hair: 'spiky', hc: 'black', glasses: true })),
+  W('barba', '', 'broda', 'tener', 'Tiene barba.', () => face({ hair: 'quiff', hc: 'black', beard: true, mustache: true, mouth: 'flat' })),
+  W('claros', '', 'jasne', 'tener los ojos', 'Tiene los ojos claros.', () => eyePair('var(--e-light)')),
+  W('oscuros', '', 'ciemne', 'tener los ojos', 'Tiene los ojos oscuros.', () => eyePair('var(--e-dark)')),
+  W('azules', '', 'niebieskie', 'tener los ojos', 'Tiene los ojos azules.', () => eyePair('var(--e-blue)')),
+  W('verdes', '', 'zielone', 'tener los ojos', 'Tiene los ojos verdes.', () => eyePair('var(--e-green)')),
+  W('grises', '', 'szare', 'tener los ojos', 'Tiene los ojos grises.', () => eyePair('var(--e-grey)')),
+  W('marrones', '', 'brązowe', 'tener los ojos', 'Tiene los ojos marrones.', () => eyePair('var(--e-brown)')),
+  W('coleta', '', 'kucyk', 'llevar', 'Lleva coleta.', () => face({ hair: 'pony', hc: 'blond' })),
+  W('trenzas', '', 'warkocze', 'llevar', 'Lleva trenzas.', () => face({ hair: 'braids', hc: 'black' })),
+  W('collar', '', 'naszyjnik', 'llevar', 'Lleva un collar.', () => face({ hair: 'bun', hc: 'black', necklace: true, shirt: 'var(--cl)' })),
+  W('pendientes', '', 'kolczyki', 'llevar', 'Lleva pendientes.', () => face({ hair: 'bun', hc: 'brown', earrings: true, blush: true })),
+].map((c, i) => ({ ...c, id: 'f' + (i + 1), deck: 'fisico' }));
+
+const CARACTER = [
+  W('bueno', 'buena', 'dobry / dobra', 'ser', 'Es bueno.', () => face({ hair: 'short', hc: 'blond', eyes: 'happy', extra: HALO })),
+  W('malo', 'mala', 'zły / zła', 'ser', 'Es malo.', () => face({ hair: 'spiky', hc: 'black', brows: 'angry', mouth: 'smirk', extra: HORNS })),
+  W('simpático', 'simpática', 'sympatyczny / sympatyczna', 'ser', 'Es simpática.', () => face({ hair: 'long', hc: 'brown', eyes: 'happy', mouth: 'big', blush: true, extra: HEART(84, 26, 1.5) })),
+  W('antipático', 'antipática', 'niesympatyczny / niesympatyczna', 'ser', 'Es antipático.', () => face({ hair: 'short', hc: 'black', eyes: 'side', brows: 'angry', mouth: 'frown', extra: bubble(64, 6, 32, 15, '¡Bah!', 68, 30) })),
+  W('tranquilo', 'tranquila', 'spokojny / spokojna', 'ser', 'Es tranquila.', () => face({ hair: 'straight', hc: 'blond', eyes: 'closed', extra: CALM })),
+  W('nervioso', 'nerviosa', 'nerwowy / nerwowa', 'ser', 'Es nervioso.', () => face({ hair: 'spiky', hc: 'brown', eyes: 'wide', brows: 'worried', mouth: 'wavy', extra: DROP(73, 36) + DROP(27, 42, .8) + SHAKE })),
+  W('introvertido', 'introvertida', 'introwertyk / introwertyczka', 'ser', 'Es introvertido.', () => face({ hair: 'short', hc: 'brown', eyes: 'closed', mouth: 'flat', extra: PHONES + BOOK })),
+  W('extrovertido', 'extrovertida', 'ekstrawertyk / ekstrawertyczka', 'ser', 'Es extrovertida.', () => face({ hair: 'pony', hc: 'red', eyes: 'happy', mouth: 'big', extra: WAVE + bubble(2, 4, 34, 15, '¡Hola!', 30, 30) })),
+  W('hablador', 'habladora', 'rozgadany / rozgadana', 'ser', 'Es habladora.', () => face({ hair: 'curly', hc: 'brown', mouth: 'o', extra: bubble(66, 2, 32, 14, 'bla bla', 70, 28, 7.5) + bubble(2, 8, 26, 14, 'bla', 30, 32, 7.5) })),
+  W('callado', 'callada', 'cichy, małomówny', 'ser', 'Es callado.', () => face({ hair: 'short', hc: 'black', mouth: 'zip' })),
+  W('trabajador', 'trabajadora', 'pracowity / pracowita', 'ser', 'Es trabajador.', () => face({ hair: 'none', brows: 'angry', mouth: 'smile', extra: HARDHAT + DROP(72, 50, .9) })),
+  W('vago', 'vaga', 'leniwy / leniwa', 'ser', 'Es vago.', () => face({ hair: 'spiky', hc: 'brown', eyes: 'sleepy', mouth: 'yawn', extra: ZZZ })),
+  W('divertido', 'divertida', 'zabawny / zabawna', 'ser', 'Es divertido.', () => face({ hair: 'short', hc: 'red', eyes: 'happy', mouth: 'laugh', extra: PARTY })),
+  W('aburrido', 'aburrida', 'nudny / nudna', 'ser', 'Es aburrido.', () => face({ hair: 'short', hc: 'grey', eyes: 'sleepy', mouth: 'flat', extra: CHINHAND + bubble(68, 6, 28, 14, '...', 70, 30) })),
+  W('educado', 'educada', 'dobrze wychowany / wychowana', 'ser', 'Es educado.', () => face({ hair: 'short', hc: 'black', eyes: 'happy', under: COLLAR + BOWTIE, shirt: 'var(--cl)', extra: bubble(56, 4, 42, 15, '¡Gracias!', 66, 30, 8) })),
+  W('maleducado', 'maleducada', 'niewychowany / niewychowana', 'ser', 'Es maleducado.', () => face({ hair: 'spiky', hc: 'black', brows: 'angry', mouth: 'tongue', eyes: 'side' })),
+  W('tonto', 'tonta', 'głupi / głupia', 'ser', 'Es tonto.', () => face({ hair: 'spiky', hc: 'blond', eyes: 'goofy', mouth: 'o', extra: QMARKS })),
+  W('inteligente / listo', 'lista', 'mądry / mądra', 'ser', 'Es inteligente.', () => face({ hair: 'short', hc: 'brown', glasses: true, mouth: 'smile', extra: BULB })),
+  W('sincero', 'sincera', 'szczery / szczera', 'ser', 'Es sincera.', () => face({ hair: 'long', hc: 'black', eyes: 'color', ec: 'var(--e-green)', extra: HEART(38, 92, 1.4) })),
+  W('mentiroso', 'mentirosa', 'kłamliwy, kłamca', 'ser', 'Es mentiroso.', () => face({ hair: 'short', hc: 'brown', eyes: 'side', mouth: 'smirk', nose: 'long' })),
+  W('agradable / amable', '', 'miły / miła', 'ser', 'Es amable.', () => face({ hair: 'wavy', hc: 'blond', eyes: 'happy', blush: true, extra: FLOWERHAND })),
+  W('desagradable', '', 'nieprzyjemny / nieprzyjemna', 'ser', 'Es desagradable.', () => face({ hair: 'short', hc: 'black', brows: 'angry', mouth: 'frown', extra: STORM })),
+  W('generoso', 'generosa', 'hojny / hojna', 'ser', 'Es generoso.', () => face({ hair: 'short', hc: 'blond', eyes: 'happy', mouth: 'big', extra: GIFT })),
+  W('tacaño', 'tacaña', 'skąpy / skąpa', 'ser', 'Es tacaño.', () => face({ hair: 'short', hc: 'grey', eyes: 'side', mouth: 'smirk', brows: 'angry', extra: MONEYBAG })),
+].map((c, i) => ({ ...c, id: 'c' + (i + 1), deck: 'caracter' }));
+
+const ALL = [...ROPA, ...FISICO, ...CARACTER];
+const DECKS = [
+  { id: 'ropa', name: 'La ropa', cards: ROPA },
+  { id: 'fisico', name: 'Descripción física', cards: FISICO },
+  { id: 'caracter', name: 'Carácter', cards: CARACTER },
+  { id: 'todo', name: 'Wszystko', cards: ALL },
+];
+
+/* ===== stan ===== */
+const store = {
+  get() { try { return JSON.parse(localStorage.getItem('fiszki-arriba') || '{}'); } catch { return {}; } },
+  set(v) { try { localStorage.setItem('fiszki-arriba', JSON.stringify(v)); } catch { } },
+};
+const saved = store.get();
+const st = {
+  deck: DECKS.some(d => d.id === saved.deck) ? saved.deck : 'ropa',
+  view: saved.view === 'all' ? 'all' : 'learn',
+  front: ['img', 'es', 'pl'].includes(saved.front) ? saved.front : 'img',
+  known: new Set(Array.isArray(saved.known) ? saved.known : []),
+  queue: [], i: 0, flipped: false, missed: [], flippedTiles: new Set(),
+};
+const persist = () => store.set({ deck: st.deck, view: st.view, front: st.front, known: [...st.known] });
+const deck = () => DECKS.find(d => d.id === st.deck);
+const byId = Object.fromEntries(ALL.map(c => [c.id, c]));
+const cache = {};
+const pic = c => cache[c.id] ??= c.draw();
+const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+function startRound(ids) {
+  st.queue = shuffle(ids || deck().cards.map(c => c.id));
+  st.i = 0; st.flipped = false; st.missed = [];
+}
+
+/* ===== mowa ===== */
+let esVoice = null;
+function pickVoice() {
+  try { const v = speechSynthesis.getVoices(); esVoice = v.find(x => x.lang === 'es-ES') || v.find(x => x.lang?.startsWith('es')) || null; } catch { }
+}
+try { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; } catch { }
+function say(c) {
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance((c.art ? c.art + ' ' : '') + c.es.replace(' / ', ', '));
+    u.lang = 'es-ES'; if (esVoice) u.voice = esVoice; u.rate = .9;
+    speechSynthesis.speak(u);
+  } catch { }
+}
+const SPEAKER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>';
+
+/* ===== render ===== */
+const CAT = { ropa: 'La ropa', fisico: 'Descripción física', caracter: 'Carácter' };
+const catHTML = c => `<div class="cat ${c.deck}" lang="es">${CAT[c.deck]}</div>`;
+const esHTML = c => `${c.tag ? `<span class="chip">${c.tag}</span>` : ''}<div class="es" lang="es">${c.art ? `<span class="art">${c.art}</span> ` : ''}${c.es}${c.esF ? `<span class="fem"> / ${c.esF}</span>` : ''}</div>`;
+const plHTML = c => `<div class="pl">${c.pl}</div>`;
+function sides(c) {
+  const f = st.front;
+  const front = f === 'img' ? `<div class="side front pic"><div class="ill">${pic(c)}</div></div>`
+    : `<div class="side front">${f === 'es' ? esHTML(c) : plHTML(c)}</div>`;
+  let back = '';
+  if (f !== 'img') back += `<div class="ill">${pic(c)}</div>`;
+  if (f !== 'es') back += esHTML(c);
+  if (f !== 'pl') back += plHTML(c);
+  back += `<div class="ex" lang="es">${c.ex}</div>`;
+  return front + `<div class="side back">${back}</div>`;
+}
+
+const $ = s => document.querySelector(s);
+function renderChrome() {
+  $('#decks').innerHTML = DECKS.map(d => `<button class="deck" type="button" data-d="${d.id}" aria-pressed="${d.id === st.deck}">${d.name} <small>${d.cards.length}</small></button>`).join('');
+  document.querySelectorAll('#views button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === st.view));
+  document.querySelectorAll('#fronts button').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === st.front));
+  const cards = deck().cards, k = cards.filter(c => st.known.has(c.id)).length;
+  $('#stat').innerHTML = `<span>Umiesz ${k} z ${cards.length}</span><span class="meter"><i style="width:${cards.length ? k / cards.length * 100 : 0}%"></i></span>`;
+}
+
+function renderLearn() {
+  const n = st.queue.length;
+  if (st.i >= n) {
+    const missed = st.missed.length;
+    $('#main').innerHTML = `<div class="stage"><div class="done">
+      <h2>${missed ? '¡Bien!' : '¡Perfecto!'}</h2>
+      <p>${missed ? `Umiesz ${n - missed} z ${n}. Zostało ${missed} do powtórki.` : `Wszystkie ${n} kart z tej rundy umiesz.`}</p>
+      <div class="row">
+        ${missed ? `<button class="btn" id="again-missed" type="button">Powtórz ${missed} trudne</button>` : ''}
+        <button class="btn" id="again-all" type="button">Cała talia od nowa</button>
+      </div></div></div>`;
+    return;
+  }
+  const c = byId[st.queue[st.i]];
+  $('#main').innerHTML = `<div class="stage">
+    <div class="progress"><div style="display:flex;justify-content:space-between"><span>Karta ${st.i + 1} z ${n}</span></div><div class="bar"><i style="width:${st.i / n * 100}%"></i></div></div>
+    ${catHTML(c)}
+    <div class="card ${st.flipped ? 'flipped' : ''}" id="card" role="button" tabindex="0" aria-label="Odwróć kartę">
+      <div class="inner">${sides(c)}</div>
+    </div>
+    <div class="actions">
+      <button class="btn no" id="no" type="button">Jeszcze nie</button>
+      <button class="btn" id="say" type="button" aria-label="Wymów po hiszpańsku">${SPEAKER.replace('<svg', '<svg width="18" height="18"')}</button>
+      <button class="btn yes" id="yes" type="button">Umiem</button>
+    </div>
+    <div class="hint"><kbd>spacja</kbd> odwróć · <kbd>←</kbd> jeszcze nie · <kbd>→</kbd> umiem</div>
+  </div>`;
+}
+
+function renderAll() {
+  $('#main').innerHTML = `<div class="grid">${deck().cards.map(c => `<div class="cell">${catHTML(c)}
+    <div class="tile ${st.flippedTiles.has(c.id) ? 'flipped' : ''}" data-id="${c.id}" role="button" tabindex="0" aria-label="${c.es}">
+      ${st.known.has(c.id) ? '<span class="known" title="Umiesz"></span>' : ''}
+      <div class="inner">${sides(c)}</div>
+    </div></div>`).join('')}</div>`;
+}
+
+function render() { renderChrome(); st.view === 'learn' ? renderLearn() : renderAll(); }
+
+function flip() { st.flipped = !st.flipped; $('#card')?.classList.toggle('flipped', st.flipped); }
+function answer(ok) {
+  const id = st.queue[st.i]; if (!id) return;
+  if (ok) st.known.add(id); else { st.known.delete(id); st.missed.push(id); }
+  st.i++; st.flipped = false; persist(); render();
+}
+
+/* ===== zdarzenia ===== */
+document.addEventListener('click', e => {
+  const t = e.target.closest('button, .card, .tile'); if (!t) return;
+  if (t.dataset.d) { st.deck = t.dataset.d; st.flippedTiles.clear(); startRound(); persist(); return render(); }
+  if (t.dataset.v) { st.view = t.dataset.v; persist(); return render(); }
+  if (t.dataset.f) { st.front = t.dataset.f; st.flipped = false; st.flippedTiles.clear(); persist(); return render(); }
+  switch (t.id) {
+    case 'shuffle': st.flippedTiles.clear(); startRound(); return render();
+    case 'card': return flip();
+    case 'yes': return answer(true);
+    case 'no': return answer(false);
+    case 'say': return say(byId[st.queue[st.i]]);
+    case 'again-missed': startRound(st.missed); return render();
+    case 'again-all': startRound(); return render();
+  }
+  if (t.classList.contains('tile')) {
+    const id = t.dataset.id;
+    st.flippedTiles.has(id) ? st.flippedTiles.delete(id) : st.flippedTiles.add(id);
+    t.classList.toggle('flipped');
+    if (st.flippedTiles.has(id)) say(byId[id]);
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.target.closest?.('.tile') && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); return e.target.click(); }
+  if (st.view !== 'learn' || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.target.tagName === 'BUTTON' && (e.key === 'Enter' || e.key === ' ')) return;
+  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip(); }
+  else if (e.key === 'ArrowRight') answer(true);
+  else if (e.key === 'ArrowLeft') answer(false);
+});
+
+startRound();
+render();
+</script>
+
+</body>
+</html>

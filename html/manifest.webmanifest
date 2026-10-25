@@ -1,0 +1,14 @@
+{
+  "name": "Fiszki Arriba Joven",
+  "short_name": "Fiszki ES",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#eceff5",
+  "theme_color": "#2747c9",
+  "lang": "pl",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

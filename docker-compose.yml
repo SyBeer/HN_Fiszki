@@ -1,0 +1,8 @@
+services:
+  fiszki-hiszpanski:
+    build: .
+    image: fiszki-hiszpanski:latest
+    container_name: fiszki-hiszpanski
+    restart: unless-stopped
+    ports:
+      - "8085:80"
