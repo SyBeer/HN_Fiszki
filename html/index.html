@@ -192,9 +192,37 @@ kbd { font: 500 11px var(--f-body); border: 1px solid var(--line); border-bottom
 
 footer { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 12px; }
 
+/* ---- quiz ---- */
+.quizstage .card { width: min(100%, 290px); }
+.quiz, .fb, #next { width: min(100%, 360px); }
+.quiz { display: grid; gap: 8px; }
+.qlabel { font-size: 13px; color: var(--muted); }
+.qrow { display: flex; gap: 8px; }
+.qrow input {
+  flex: 1; min-width: 0; font: 500 18px/1.2 var(--f-body); padding: 11px 13px;
+  border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--fg);
+}
+.qrow input:focus { outline: 3px solid var(--accent); outline-offset: 1px; }
+.qrow input:disabled { opacity: .75; }
+.chars { display: flex; flex-wrap: wrap; gap: 6px; }
+.ch {
+  font: 500 16px/1 var(--f-body); min-width: 40px; height: 40px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--fg);
+}
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.fb { padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); display: grid; gap: 4px; }
+.fb.good { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, var(--surface)); }
+.fb.bad { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 10%, var(--surface)); }
+.fb .verdict { font-weight: 700; }
+.fb.good .verdict { color: var(--good); }
+.fb.bad .verdict { color: var(--bad); }
+.fb small { color: var(--muted); }
+
 @media (max-width: 520px) {
   .stat { margin-left: 0; width: 100%; }
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .quizstage .card { width: min(100%, 220px); }
+  .quizstage { gap: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .inner { transition: none; } }
 </style>
@@ -214,6 +242,7 @@ footer { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; g
     <div class="grp"><span class="seg-label">Widok</span>
       <div class="seg" id="views">
         <button data-v="learn">Nauka</button>
+        <button data-v="quiz">Quiz</button>
         <button data-v="all">Wszystkie</button>
       </div>
     </div>
@@ -235,10 +264,11 @@ footer { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; g
 
   <footer>
     <span>Słówka: Arriba Joven 1, s. 28 (ćw. 3.2 i 3.3) oraz karta „La ropa”.</span>
-    <span>v1.2.0</span>
+    <span>v1.3.0</span>
   </footer>
 </div>
 
+<script src="check.js"></script>
 <script>
 /* ===== rysowanie ===== */
 const CL = 'var(--cl)', NS = 'stroke:none';
@@ -581,10 +611,10 @@ const store = {
 const saved = store.get();
 const st = {
   deck: DECKS.some(d => d.id === saved.deck) ? saved.deck : 'ropa',
-  view: saved.view === 'all' ? 'all' : 'learn',
+  view: ['learn', 'quiz', 'all'].includes(saved.view) ? saved.view : 'learn',
   front: ['img', 'es', 'pl'].includes(saved.front) ? saved.front : 'img',
   known: new Set(Array.isArray(saved.known) ? saved.known : []),
-  queue: [], i: 0, flipped: false, missed: [], flippedTiles: new Set(),
+  queue: [], i: 0, flipped: false, missed: [], flippedTiles: new Set(), q: null, qInput: '',
 };
 const persist = () => store.set({ deck: st.deck, view: st.view, front: st.front, known: [...st.known] });
 const deck = () => DECKS.find(d => d.id === st.deck);
@@ -595,7 +625,7 @@ const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { cons
 
 function startRound(ids) {
   st.queue = shuffle(ids || deck().cards.map(c => c.id));
-  st.i = 0; st.flipped = false; st.missed = [];
+  st.i = 0; st.flipped = false; st.missed = []; st.q = null; st.qInput = '';
 }
 
 /* ===== mowa ===== */
@@ -677,7 +707,52 @@ function renderAll() {
     </div></div>`).join('')}</div>`;
 }
 
-function render() { renderChrome(); st.view === 'learn' ? renderLearn() : renderAll(); }
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+const quizLang = () => st.front === 'es' ? 'pl' : 'es';
+function quizAnswer(c, lang) { return lang === 'es' ? `${c.art ? c.art + ' ' : ''}${c.es}${c.esF ? ' / ' + c.esF : ''}` : c.pl; }
+function renderQuiz() {
+  const n = st.queue.length;
+  if (st.i >= n) return renderLearn();
+  const c = byId[st.queue[st.i]], lang = quizLang(), r = st.q;
+  const good = st.i + (r ? 1 : 0) - st.missed.length;
+  const ans = `<b lang="${lang}">${esc(quizAnswer(c, lang))}</b>`;
+  const msg = !r ? '' : !r.ok ? ['Nie tym razem', `Poprawnie: ${ans}`]
+    : r.note === 'akcent' ? ['Dobrze!', `Uważaj na akcent: ${ans}`]
+    : r.note === 'literowka' ? ['Prawie dobrze!', `Poprawna pisownia: ${ans}`]
+    : r.note === 'rodzajnik' ? ['Dobrze!', `Tylko rodzajnik: <b lang="es">${esc(c.art + ' ' + c.es)}</b>`]
+    : ['Dobrze!', ans];
+  $('#main').innerHTML = `<div class="stage quizstage">
+    <div class="progress"><div style="display:flex;justify-content:space-between"><span>Pytanie ${st.i + 1} z ${n}</span><span>Dobrze: ${good}</span></div><div class="bar"><i style="width:${st.i / n * 100}%"></i></div></div>
+    ${catHTML(c)}
+    <div class="card ${r ? 'flipped' : ''}" id="card" role="img" aria-label="Fiszka">
+      <div class="inner">${sides(c)}</div>
+    </div>
+    <form class="quiz" id="quiz" autocomplete="off">
+      <label class="qlabel" for="answer">${lang === 'es' ? 'Napisz po hiszpańsku' : 'Napisz po polsku'}</label>
+      <div class="qrow">
+        <input id="answer" name="answer" type="text" lang="${lang}" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done" value="${esc(st.qInput)}" ${r ? 'disabled' : ''}>
+        <button class="btn primary" type="submit" ${r ? 'hidden' : ''}>Sprawdź</button>
+      </div>
+      ${lang === 'es' && !r ? `<div class="chars" aria-label="Litery hiszpańskie">${['á', 'é', 'í', 'ó', 'ú', 'ü', 'ñ', '¡', '¿'].map(ch => `<button class="ch" type="button" data-ch="${ch}">${ch}</button>`).join('')}</div>` : ''}
+    </form>
+    ${r ? `<div class="fb ${r.ok ? 'good' : 'bad'}" role="status"><span class="verdict">${msg[0]}</span><span>${msg[1]}</span>${!r.ok ? `<small>Twoja odpowiedź: ${esc(st.qInput)}</small>` : ''}</div>
+    <button class="btn primary" id="next" type="button">Dalej</button>` : ''}
+  </div>`;
+  (r ? $('#next') : $('#answer'))?.focus({ preventScroll: true });
+  if (r) $('#next').scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+}
+function submitQuiz() {
+  const c = byId[st.queue[st.i]], val = $('#answer').value;
+  const r = FiszkiCheck.check(c, val, quizLang());
+  if (!r) return $('#answer').focus();
+  st.q = r; st.qInput = val;
+  if (r.ok) st.known.add(c.id); else { st.known.delete(c.id); st.missed.push(c.id); }
+  persist(); render();
+  if (quizLang() === 'es') say(c);
+}
+function nextQuiz() { st.i++; st.q = null; st.qInput = ''; render(); }
+
+function render() { renderChrome(); ({ learn: renderLearn, quiz: renderQuiz, all: renderAll })[st.view](); }
 
 function flip() { st.flipped = !st.flipped; $('#card')?.classList.toggle('flipped', st.flipped); }
 function answer(ok) {
@@ -689,12 +764,19 @@ function answer(ok) {
 /* ===== zdarzenia ===== */
 document.addEventListener('click', e => {
   const t = e.target.closest('button, .card, .tile'); if (!t) return;
+  if (t.dataset.ch) {
+    const a = $('#answer'), i = a.selectionStart ?? a.value.length, j = a.selectionEnd ?? i;
+    a.value = a.value.slice(0, i) + t.dataset.ch + a.value.slice(j);
+    a.focus(); a.setSelectionRange(i + 1, i + 1);
+    return;
+  }
   if (t.dataset.d) { st.deck = t.dataset.d; st.flippedTiles.clear(); startRound(); persist(); return render(); }
   if (t.dataset.v) { st.view = t.dataset.v; persist(); return render(); }
   if (t.dataset.f) { st.front = t.dataset.f; st.flipped = false; st.flippedTiles.clear(); persist(); return render(); }
   switch (t.id) {
     case 'shuffle': st.flippedTiles.clear(); startRound(); return render();
-    case 'card': return flip();
+    case 'card': return st.view === 'learn' ? flip() : undefined;
+    case 'next': return nextQuiz();
     case 'yes': return answer(true);
     case 'no': return answer(false);
     case 'say': return say(byId[st.queue[st.i]]);
@@ -708,6 +790,7 @@ document.addEventListener('click', e => {
     if (st.flippedTiles.has(id)) say(byId[id]);
   }
 });
+document.addEventListener('submit', e => { if (e.target.id === 'quiz') { e.preventDefault(); submitQuiz(); } });
 document.addEventListener('keydown', e => {
   if (e.target.closest?.('.tile') && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); return e.target.click(); }
   if (st.view !== 'learn' || e.metaKey || e.ctrlKey || e.altKey) return;
