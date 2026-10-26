@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.0 - 2026-10-26
+- Metering: „Kto ćwiczy?” i zapis każdej odpowiedzi (Quiz i Nauka) na serwerze, z kolejką offline.
+- Strona wyników dla rodzica `/wyniki.html` (klucz): rundy, błędy, najtrudniejsze słowa.
+- Nowy kontener `results` (Python, SQLite).
+
 ## 1.7.0 - 2026-10-26
 - Przycisk włączania i wyłączania dźwięku (zapamiętywany na urządzeniu).
 

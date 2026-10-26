@@ -28,3 +28,19 @@ Hania uczy się słówek z hiszpańskiego (Arriba Joven 1): ubrania, wygląd, ch
 - `node --test` przechodzi (test/check.test.js pokrywa zasady sprawdzania).
 - Quiz działa na ekranie telefonu (375 px) bez przewijania w bok.
 - Wersja w stopce, README i CHANGELOG jest ta sama.
+
+## Metering - zapis wyników na serwerze (od 1.8.0)
+Cel: rodzic może sprawdzić, kto, kiedy i jak ćwiczył (wcześniej wyniki były tylko w przeglądarce ucznia).
+
+- Przed Nauką i Quizem aplikacja pyta "Kto ćwiczy?" (imię 1-40 znaków), zapamiętuje je na urządzeniu; na pasku "Uczeń: Hania - zmień".
+- Każda odpowiedź idzie na serwer: imię, karta (id + słowo), talia, widok (nauka/quiz), przód karty, wpisany tekst (quiz), wynik, id rundy, czas.
+  - Wyniki: quiz `dobrze`, `akcent`, `literowka`, `rodzajnik`, `zle`, `nie_wiem`; nauka `umiem`, `nie_umiem`.
+- Brak sieci nie blokuje nauki: niewysłane odpowiedzi czekają w przeglądarce (do 500) i idą przy następnej udanej wysyłce.
+- Serwer: `POST /api/answer` (walidacja pól, limit 120/min na IP), `GET /api/results` tylko z kluczem `X-Admin-Token` (ADMIN_TOKEN w .env na RPi), max 2000 ostatnich wpisów, filtr `student`.
+- Baza SQLite w wolumenie Dockera - przeżywa przebudowę.
+- Strona `/wyniki.html` (klucz wpisany raz, pamiętany w przeglądarce): wybór ucznia, rundy od najnowszej (data i godzina, talia, widok, liczba odpowiedzi, % dobrych, lista błędów), najtrudniejsze słowa.
+- Ocena jest liczona w przeglądarce ucznia (to aplikacja domowa, nie egzamin).
+
+### Kryteria akceptacji
+- `python3 -m unittest discover -s results` przechodzi (walidacja, zapis, klucz, limit, HTTP).
+- Po rundzie quizu wpisy są widoczne na `/wyniki.html` z poprawnymi godzinami (czas lokalny).

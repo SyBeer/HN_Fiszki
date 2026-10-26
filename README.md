@@ -3,7 +3,7 @@
 Fiszki obrazek / słowo dla Hani, na podstawie podręcznika *Arriba Joven 1* (s. 28, ćw. 3.2 i 3.3) i karty „La ropa”.
 91 kart w 3 taliach: La ropa, Descripción física, Carácter. Rysunki to SVG w kodzie, bez zewnętrznych obrazków.
 
-Wersja: **1.7.0**
+Wersja: **1.8.0**
 
 ## Widoki
 - **Nauka** - odwracanie kart, „Umiem” / „Jeszcze nie”.
@@ -14,9 +14,14 @@ Przycisk „Dźwięk włączony / wyłączony” wycisza automatyczne czytanie s
 
 „Na przodzie: Mieszane” losuje dla każdej karty obrazek, hiszpański albo polski.
 
+## Wyniki uczniów
+Aplikacja pyta „Kto ćwiczy?” i wysyła każdą odpowiedź na serwer (kontener `fiszki-hiszpanski-results`, SQLite w wolumenie).
+Raport: http://192.168.1.4:8085/wyniki.html - wymaga klucza rodzica (`ADMIN_TOKEN` w `~/fiszki-hiszpanski/.env` na RPi; kopia w Keychain Maca: `security find-generic-password -s fiszki-admin-token -w`).
+
 ## Testy
 ```bash
 node --test
+python3 -m unittest discover -s results
 ```
 
 ## Uruchomienie lokalne
