@@ -3,12 +3,14 @@
 Fiszki obrazek / słowo dla Hani, na podstawie podręcznika *Arriba Joven 1* (s. 28, ćw. 3.2 i 3.3) i karty „La ropa”.
 91 kart w 3 taliach: La ropa, Descripción física, Carácter. Rysunki to SVG w kodzie, bez zewnętrznych obrazków.
 
-Wersja: **1.6.0**
+Wersja: **1.7.0**
 
 ## Widoki
 - **Nauka** - odwracanie kart, „Umiem” / „Jeszcze nie”.
 - **Quiz** - wpisujesz odpowiedź, aplikacja sprawdza (akcenty i rodzajnik z podpowiedzią, zasady w SPEC.md). „Nie wiem” odwraca kartę, a odpowiedź trzeba przepisać.
 - **Wszystkie** - siatka kart.
+
+Przycisk „Dźwięk włączony / wyłączony” wycisza automatyczne czytanie słów (głośnik przy karcie w Nauce działa zawsze).
 
 „Na przodzie: Mieszane” losuje dla każdej karty obrazek, hiszpański albo polski.
 

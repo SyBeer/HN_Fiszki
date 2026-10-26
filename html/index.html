@@ -267,6 +267,7 @@ footer { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; g
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
       Tasuj od nowa
     </button>
+    <button class="btn" id="sound" type="button" aria-pressed="true"></button>
     <div class="stat" id="stat"></div>
   </div>
 
@@ -274,7 +275,7 @@ footer { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; g
 
   <footer>
     <span>Słówka: Arriba Joven 1, s. 28 (ćw. 3.2 i 3.3) oraz karta „La ropa”.</span>
-    <span>v1.6.0</span>
+    <span>v1.7.0</span>
   </footer>
 </div>
 
@@ -624,9 +625,10 @@ const st = {
   view: ['learn', 'quiz', 'all'].includes(saved.view) ? saved.view : 'learn',
   front: ['img', 'es', 'pl', 'mix'].includes(saved.front) ? saved.front : 'img',
   known: new Set(Array.isArray(saved.known) ? saved.known : []),
+  sound: saved.sound !== false,
   mix: {}, queue: [], i: 0, flipped: false, missed: [], flippedTiles: new Set(), q: null, qInput: '', qMode: 'ask', qCopyErr: false,
 };
-const persist = () => store.set({ deck: st.deck, view: st.view, front: st.front, known: [...st.known] });
+const persist = () => store.set({ deck: st.deck, view: st.view, front: st.front, known: [...st.known], sound: st.sound });
 const deck = () => DECKS.find(d => d.id === st.deck);
 const byId = Object.fromEntries(ALL.map(c => [c.id, c]));
 const cache = {};
@@ -648,7 +650,8 @@ function pickVoice() {
   try { const v = speechSynthesis.getVoices(); esVoice = v.find(x => x.lang === 'es-ES') || v.find(x => x.lang?.startsWith('es')) || null; } catch { }
 }
 try { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; } catch { }
-function say(c) {
+function say(c, manual = false) {
+  if (!st.sound && !manual) return;
   try {
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance((c.art ? c.art + ' ' : '') + c.es.replace(' / ', ', '));
@@ -656,6 +659,7 @@ function say(c) {
     speechSynthesis.speak(u);
   } catch { }
 }
+const SPEAKER_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>';
 const SPEAKER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>';
 
 /* ===== render ===== */
@@ -679,6 +683,8 @@ const $ = s => document.querySelector(s);
 function renderChrome() {
   $('#decks').innerHTML = DECKS.map(d => `<button class="deck" type="button" data-d="${d.id}" aria-pressed="${d.id === st.deck}">${d.name} <small>${d.cards.length}</small></button>`).join('');
   document.querySelectorAll('#views button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === st.view));
+  $('#sound').setAttribute('aria-pressed', st.sound);
+  $('#sound').innerHTML = (st.sound ? SPEAKER : SPEAKER_OFF).replace('<svg', '<svg width="16" height="16"') + (st.sound ? 'Dźwięk włączony' : 'Dźwięk wyłączony');
   document.querySelectorAll('#fronts button').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === st.front));
   const cards = deck().cards, k = cards.filter(c => st.known.has(c.id)).length;
   $('#stat').innerHTML = st.confirmReset
@@ -820,7 +826,11 @@ document.addEventListener('click', e => {
       st.confirmReset = false; persist(); startRound(); return render();
     case 'yes': return answer(true);
     case 'no': return answer(false);
-    case 'say': return say(byId[st.queue[st.i]]);
+    case 'say': return say(byId[st.queue[st.i]], true);
+    case 'sound':
+      st.sound = !st.sound; persist();
+      if (!st.sound) try { speechSynthesis.cancel(); } catch { }
+      return renderChrome();
     case 'again-missed': startRound(st.missed); return render();
     case 'again-all': startRound(); return render();
   }

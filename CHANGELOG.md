@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.7.0 - 2026-10-26
+- Przycisk włączania i wyłączania dźwięku (zapamiętywany na urządzeniu).
+
 ## 1.6.0 - 2026-10-26
 - Quiz: przycisk „Nie wiem” - karta się odwraca, uczeń przepisuje odpowiedź; karta liczy się jako zła i wraca w powtórce.
 
