@@ -10,6 +10,7 @@ Hania uczy się słówek z hiszpańskiego (Arriba Joven 1): ubrania, wygląd, ch
 
 ## Quiz - zasady sprawdzania
 - Przód = obrazek albo polski: odpowiedź po hiszpańsku. Przód = hiszpański: odpowiedź po polsku.
+- "Na przodzie: Mieszane" (od 1.5.0): każda karta losuje przód (obrazek / hiszpański / polski) na początku rundy; język odpowiedzi wynika z przodu tej karty. Działa też w Nauce i Wszystkich.
 - Wielkość liter, spacje na brzegach i znaki ¡!¿?.,; nie mają znaczenia.
 - Hiszpański: przyjmujemy formę męską, żeńską i każdy wariant rozdzielony "/" (np. "blanco" lub "gris", "inteligente" lub "listo"/"lista").
 - Rodzajnik (el/la/los/las/un/una/unos/unas) jest opcjonalny. Zły rodzajnik = odpowiedź zaliczona z uwagą, jaki jest poprawny.

@@ -225,6 +225,9 @@ footer { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; g
   .stat { margin-left: 0; width: 100%; }
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .quizstage .card { width: min(100%, 220px); }
+  .grp { flex-direction: column; align-items: flex-start; gap: 4px; max-width: 100%; }
+  .seg { flex-wrap: wrap; max-width: 100%; }
+  .seg button { padding: 8px 9px; }
   .quizstage { gap: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .inner { transition: none; } }
@@ -254,6 +257,7 @@ footer { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; g
         <button data-f="img">Obrazek</button>
         <button data-f="es">Hiszpański</button>
         <button data-f="pl">Polski</button>
+        <button data-f="mix">Mieszane</button>
       </div>
     </div>
     <button class="btn" id="shuffle" type="button">
@@ -267,7 +271,7 @@ footer { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; g
 
   <footer>
     <span>Słówka: Arriba Joven 1, s. 28 (ćw. 3.2 i 3.3) oraz karta „La ropa”.</span>
-    <span>v1.4.0</span>
+    <span>v1.5.0</span>
   </footer>
 </div>
 
@@ -615,9 +619,9 @@ const saved = store.get();
 const st = {
   deck: DECKS.some(d => d.id === saved.deck) ? saved.deck : 'ropa',
   view: ['learn', 'quiz', 'all'].includes(saved.view) ? saved.view : 'learn',
-  front: ['img', 'es', 'pl'].includes(saved.front) ? saved.front : 'img',
+  front: ['img', 'es', 'pl', 'mix'].includes(saved.front) ? saved.front : 'img',
   known: new Set(Array.isArray(saved.known) ? saved.known : []),
-  queue: [], i: 0, flipped: false, missed: [], flippedTiles: new Set(), q: null, qInput: '',
+  mix: {}, queue: [], i: 0, flipped: false, missed: [], flippedTiles: new Set(), q: null, qInput: '',
 };
 const persist = () => store.set({ deck: st.deck, view: st.view, front: st.front, known: [...st.known] });
 const deck = () => DECKS.find(d => d.id === st.deck);
@@ -626,7 +630,11 @@ const cache = {};
 const pic = c => cache[c.id] ??= c.draw();
 const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
+const FRONTS = ['img', 'es', 'pl'];
+function shuffleMix() { st.mix = Object.fromEntries(ALL.map(c => [c.id, FRONTS[Math.floor(Math.random() * 3)]])); }
+const frontOf = c => st.front === 'mix' ? st.mix[c.id] || 'img' : st.front;
 function startRound(ids) {
+  shuffleMix();
   st.queue = shuffle(ids || deck().cards.map(c => c.id));
   st.i = 0; st.flipped = false; st.missed = []; st.q = null; st.qInput = '';
 }
@@ -653,7 +661,7 @@ const catHTML = c => `<div class="cat ${c.deck}" lang="es">${CAT[c.deck]}</div>`
 const esHTML = c => `${c.tag ? `<span class="chip">${c.tag}</span>` : ''}<div class="es" lang="es">${c.art ? `<span class="art">${c.art}</span> ` : ''}${c.es}${c.esF ? `<span class="fem"> / ${c.esF}</span>` : ''}</div>`;
 const plHTML = c => `<div class="pl">${c.pl}</div>`;
 function sides(c) {
-  const f = st.front;
+  const f = frontOf(c);
   const front = f === 'img' ? `<div class="side front pic"><div class="ill">${pic(c)}</div></div>`
     : `<div class="side front">${f === 'es' ? esHTML(c) : plHTML(c)}</div>`;
   let back = '';
@@ -713,12 +721,12 @@ function renderAll() {
 }
 
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-const quizLang = () => st.front === 'es' ? 'pl' : 'es';
+const quizLang = c => frontOf(c) === 'es' ? 'pl' : 'es';
 function quizAnswer(c, lang) { return lang === 'es' ? `${c.art ? c.art + ' ' : ''}${c.es}${c.esF ? ' / ' + c.esF : ''}` : c.pl; }
 function renderQuiz() {
   const n = st.queue.length;
   if (st.i >= n) return renderLearn();
-  const c = byId[st.queue[st.i]], lang = quizLang(), r = st.q;
+  const c = byId[st.queue[st.i]], lang = quizLang(c), r = st.q;
   const good = st.i + (r ? 1 : 0) - st.missed.length;
   const ans = `<b lang="${lang}">${esc(quizAnswer(c, lang))}</b>`;
   const msg = !r ? '' : !r.ok ? ['Nie tym razem', `Poprawnie: ${ans}`]
@@ -748,12 +756,12 @@ function renderQuiz() {
 }
 function submitQuiz() {
   const c = byId[st.queue[st.i]], val = $('#answer').value;
-  const r = FiszkiCheck.check(c, val, quizLang());
+  const r = FiszkiCheck.check(c, val, quizLang(c));
   if (!r) return $('#answer').focus();
   st.q = r; st.qInput = val;
   if (r.ok) st.known.add(c.id); else { st.known.delete(c.id); st.missed.push(c.id); }
   persist(); render();
-  if (quizLang() === 'es') say(c);
+  if (quizLang(c) === 'es') say(c);
 }
 function nextQuiz() { st.i++; st.q = null; st.qInput = ''; render(); }
 
@@ -777,7 +785,7 @@ document.addEventListener('click', e => {
   }
   if (t.dataset.d) { st.deck = t.dataset.d; st.confirmReset = false; st.flippedTiles.clear(); startRound(); persist(); return render(); }
   if (t.dataset.v) { st.view = t.dataset.v; persist(); return render(); }
-  if (t.dataset.f) { st.front = t.dataset.f; st.flipped = false; st.flippedTiles.clear(); persist(); return render(); }
+  if (t.dataset.f) { st.front = t.dataset.f; if (st.front === 'mix') shuffleMix(); st.flipped = false; st.flippedTiles.clear(); persist(); return render(); }
   switch (t.id) {
     case 'shuffle': st.flippedTiles.clear(); startRound(); return render();
     case 'card': return st.view === 'learn' ? flip() : undefined;
