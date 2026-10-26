@@ -220,6 +220,9 @@ footer { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; g
 .fb.good .verdict { color: var(--good); }
 .fb.bad .verdict { color: var(--bad); }
 .fb small { color: var(--muted); }
+.fb.info { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+.fb.info .verdict { color: var(--accent); }
+#dunno { width: 100%; }
 
 @media (max-width: 520px) {
   .stat { margin-left: 0; width: 100%; }
@@ -271,7 +274,7 @@ footer { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; g
 
   <footer>
     <span>Słówka: Arriba Joven 1, s. 28 (ćw. 3.2 i 3.3) oraz karta „La ropa”.</span>
-    <span>v1.5.0</span>
+    <span>v1.6.0</span>
   </footer>
 </div>
 
@@ -621,7 +624,7 @@ const st = {
   view: ['learn', 'quiz', 'all'].includes(saved.view) ? saved.view : 'learn',
   front: ['img', 'es', 'pl', 'mix'].includes(saved.front) ? saved.front : 'img',
   known: new Set(Array.isArray(saved.known) ? saved.known : []),
-  mix: {}, queue: [], i: 0, flipped: false, missed: [], flippedTiles: new Set(), q: null, qInput: '',
+  mix: {}, queue: [], i: 0, flipped: false, missed: [], flippedTiles: new Set(), q: null, qInput: '', qMode: 'ask', qCopyErr: false,
 };
 const persist = () => store.set({ deck: st.deck, view: st.view, front: st.front, known: [...st.known] });
 const deck = () => DECKS.find(d => d.id === st.deck);
@@ -636,7 +639,7 @@ const frontOf = c => st.front === 'mix' ? st.mix[c.id] || 'img' : st.front;
 function startRound(ids) {
   shuffleMix();
   st.queue = shuffle(ids || deck().cards.map(c => c.id));
-  st.i = 0; st.flipped = false; st.missed = []; st.q = null; st.qInput = '';
+  st.i = 0; st.flipped = false; st.missed = []; st.q = null; st.qInput = ''; st.qMode = 'ask'; st.qCopyErr = false;
 }
 
 /* ===== mowa ===== */
@@ -726,10 +729,11 @@ function quizAnswer(c, lang) { return lang === 'es' ? `${c.art ? c.art + ' ' : '
 function renderQuiz() {
   const n = st.queue.length;
   if (st.i >= n) return renderLearn();
-  const c = byId[st.queue[st.i]], lang = quizLang(c), r = st.q;
-  const good = st.i + (r ? 1 : 0) - st.missed.length;
+  const c = byId[st.queue[st.i]], lang = quizLang(c), r = st.q, copy = st.qMode === 'copy';
+  const good = st.i + (r || copy ? 1 : 0) - st.missed.length;
   const ans = `<b lang="${lang}">${esc(quizAnswer(c, lang))}</b>`;
-  const msg = !r ? '' : !r.ok ? ['Nie tym razem', `Poprawnie: ${ans}`]
+  const msg = !r ? '' : r.copied ? ['Przepisane!', r.note === 'akcent' ? `Uważaj na akcent: ${ans}` : r.note === 'literowka' ? `Poprawna pisownia: ${ans}` : ans]
+    : !r.ok ? ['Nie tym razem', `Poprawnie: ${ans}`]
     : r.note === 'akcent' ? ['Dobrze!', `Uważaj na akcent: ${ans}`]
     : r.note === 'literowka' ? ['Prawie dobrze!', `Poprawna pisownia: ${ans}`]
     : r.note === 'rodzajnik' ? ['Dobrze!', `Tylko rodzajnik: <b lang="es">${esc(c.art + ' ' + c.es)}</b>`]
@@ -737,18 +741,22 @@ function renderQuiz() {
   $('#main').innerHTML = `<div class="stage quizstage">
     <div class="progress"><div style="display:flex;justify-content:space-between"><span>Pytanie ${st.i + 1} z ${n}</span><span>Dobrze: ${good}</span></div><div class="bar"><i style="width:${st.i / n * 100}%"></i></div></div>
     ${catHTML(c)}
-    <div class="card ${r ? 'flipped' : ''}" id="card" role="img" aria-label="Fiszka">
+    <div class="card ${r || copy ? 'flipped' : ''}" id="card" role="img" aria-label="Fiszka">
       <div class="inner">${sides(c)}</div>
     </div>
     <form class="quiz" id="quiz" autocomplete="off">
-      <label class="qlabel" for="answer">${lang === 'es' ? 'Napisz po hiszpańsku' : 'Napisz po polsku'}</label>
+      <label class="qlabel" for="answer">${copy && !r ? 'Przepisz odpowiedź z karty' : lang === 'es' ? 'Napisz po hiszpańsku' : 'Napisz po polsku'}</label>
       <div class="qrow">
         <input id="answer" name="answer" type="text" lang="${lang}" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done" value="${esc(st.qInput)}" ${r ? 'disabled' : ''}>
         <button class="btn primary" type="submit" ${r ? 'hidden' : ''}>Sprawdź</button>
       </div>
       ${lang === 'es' && !r ? `<div class="chars" aria-label="Litery hiszpańskie">${['á', 'é', 'í', 'ó', 'ú', 'ü', 'ñ', '¡', '¿'].map(ch => `<button class="ch" type="button" data-ch="${ch}">${ch}</button>`).join('')}</div>` : ''}
+      ${!r && !copy ? '<button class="btn" id="dunno" type="button">Nie wiem - pokaż odpowiedź</button>' : ''}
     </form>
-    ${r ? `<div class="fb ${r.ok ? 'good' : 'bad'}" role="status"><span class="verdict">${msg[0]}</span><span>${msg[1]}</span>${!r.ok ? `<small>Twoja odpowiedź: ${esc(st.qInput)}</small>` : ''}</div>
+    ${copy && !r ? (st.qCopyErr
+      ? '<div class="fb bad" role="status"><span class="verdict">To jeszcze nie to</span><span>Przepisz dokładnie to, co jest na karcie.</span></div>'
+      : '<div class="fb info" role="status"><span class="verdict">Nie szkodzi</span><span>Przeczytaj kartę i przepisz odpowiedź.</span></div>') : ''}
+    ${r ? `<div class="fb ${r.ok ? 'good' : 'bad'}" role="status"><span class="verdict">${msg[0]}</span><span>${msg[1]}</span>${!r.ok ? `<small>Twoja odpowiedź: ${esc(st.qInput)}</small>` : ''}${r.copied ? '<small>Ta karta wróci w powtórce.</small>' : ''}</div>
     <button class="btn primary" id="next" type="button">Dalej</button>` : ''}
   </div>`;
   (r ? $('#next') : $('#answer'))?.focus({ preventScroll: true });
@@ -758,12 +766,26 @@ function submitQuiz() {
   const c = byId[st.queue[st.i]], val = $('#answer').value;
   const r = FiszkiCheck.check(c, val, quizLang(c));
   if (!r) return $('#answer').focus();
+  if (st.qMode === 'copy') {
+    st.qInput = val;
+    if (r.ok) st.q = { ...r, copied: true }; else st.qCopyErr = true;
+    render();
+    if (r.ok && quizLang(c) === 'es') say(c);
+    return;
+  }
   st.q = r; st.qInput = val;
   if (r.ok) st.known.add(c.id); else { st.known.delete(c.id); st.missed.push(c.id); }
   persist(); render();
   if (quizLang(c) === 'es') say(c);
 }
-function nextQuiz() { st.i++; st.q = null; st.qInput = ''; render(); }
+function nextQuiz() { st.i++; st.q = null; st.qInput = ''; st.qMode = 'ask'; st.qCopyErr = false; render(); }
+function dontKnow() {
+  const c = byId[st.queue[st.i]];
+  st.qMode = 'copy'; st.qInput = ''; st.qCopyErr = false;
+  st.known.delete(c.id); st.missed.push(c.id);
+  persist(); render();
+  if (quizLang(c) === 'es') say(c);
+}
 
 function render() { renderChrome(); ({ learn: renderLearn, quiz: renderQuiz, all: renderAll })[st.view](); }
 
@@ -790,6 +812,7 @@ document.addEventListener('click', e => {
     case 'shuffle': st.flippedTiles.clear(); startRound(); return render();
     case 'card': return st.view === 'learn' ? flip() : undefined;
     case 'next': return nextQuiz();
+    case 'dunno': return dontKnow();
     case 'reset': st.confirmReset = true; renderChrome(); return $('#reset-no')?.focus();
     case 'reset-no': st.confirmReset = false; return renderChrome();
     case 'reset-yes':

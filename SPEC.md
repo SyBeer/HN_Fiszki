@@ -21,6 +21,7 @@ Hania uczy się słówek z hiszpańskiego (Arriba Joven 1): ubrania, wygląd, ch
 - Po sprawdzeniu karta się odwraca, widać pełną odpowiedź; Enter przechodzi dalej.
 - Zła odpowiedź trafia do powtórki i zdejmuje kartę z "Umiem"; dobra dodaje do "Umiem".
 - Przyciski z literami á é í ó ú ü ñ ¡ ¿ wstawiają znak w miejscu kursora.
+- "Nie wiem" (od 1.6.0): karta się odwraca, a uczeń przepisuje odpowiedź z karty do pola. Przepisanie sprawdzane jest tymi samymi zasadami; przy błędzie można poprawiać do skutku. Karta liczy się jako zła (trafia do powtórki, zdjęta z "Umiem"). Dopiero po przepisaniu pojawia się "Dalej".
 - Na końcu rundy: wynik i "Powtórz trudne".
 
 ## Kryteria akceptacji

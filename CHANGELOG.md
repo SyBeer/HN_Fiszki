@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.6.0 - 2026-10-26
+- Quiz: przycisk „Nie wiem” - karta się odwraca, uczeń przepisuje odpowiedź; karta liczy się jako zła i wraca w powtórce.
+
 ## 1.5.0 - 2026-10-26
 - „Na przodzie: Mieszane” - każda karta losuje obrazek, hiszpański albo polski (Quiz, Nauka, Wszystkie).
 - Pasek opcji układa się w kolumnę na telefonie, bez przewijania w bok.
