@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.4.0 - 2026-10-26
+- Przycisk „Wyczyść wyniki” z potwierdzeniem - zeruje „Umiem” dla wybranej talii i zaczyna rundę od nowa.
+
 ## 1.3.0 - 2026-10-26
 - Tryb Quiz: wpisywanie odpowiedzi (hiszpański albo polski), sprawdzanie z tolerancją akcentów, rodzajnika i jednej literówki.
 - Przyciski z literami á é í ó ú ü ñ ¡ ¿.

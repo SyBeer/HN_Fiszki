@@ -123,6 +123,9 @@ button:focus-visible, .card:focus-visible, .tile:focus-visible { outline: 3px so
 .stat { margin-left: auto; color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 10px; font-variant-numeric: tabular-nums; }
 .meter { width: 90px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
 .meter i { display: block; height: 100%; background: var(--good); }
+.link { font: 500 13px/1 var(--f-body); color: var(--accent); background: none; border: 0; padding: 6px 4px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.link.danger { color: var(--bad); }
+.confirm { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; color: var(--fg); }
 
 /* ---- karta ---- */
 .stage { display: grid; justify-items: center; gap: 16px; }
@@ -264,7 +267,7 @@ footer { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; g
 
   <footer>
     <span>Słówka: Arriba Joven 1, s. 28 (ćw. 3.2 i 3.3) oraz karta „La ropa”.</span>
-    <span>v1.3.0</span>
+    <span>v1.4.0</span>
   </footer>
 </div>
 
@@ -667,7 +670,9 @@ function renderChrome() {
   document.querySelectorAll('#views button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === st.view));
   document.querySelectorAll('#fronts button').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === st.front));
   const cards = deck().cards, k = cards.filter(c => st.known.has(c.id)).length;
-  $('#stat').innerHTML = `<span>Umiesz ${k} z ${cards.length}</span><span class="meter"><i style="width:${cards.length ? k / cards.length * 100 : 0}%"></i></span>`;
+  $('#stat').innerHTML = st.confirmReset
+    ? `<span class="confirm" role="alert">Wyczyścić wyniki: ${deck().name}? <button class="link danger" id="reset-yes" type="button">Tak, wyczyść</button><button class="link" id="reset-no" type="button">Anuluj</button></span>`
+    : `<span>Umiesz ${k} z ${cards.length}</span><span class="meter"><i style="width:${cards.length ? k / cards.length * 100 : 0}%"></i></span>${k ? '<button class="link" id="reset" type="button">Wyczyść wyniki</button>' : ''}`;
 }
 
 function renderLearn() {
@@ -770,13 +775,18 @@ document.addEventListener('click', e => {
     a.focus(); a.setSelectionRange(i + 1, i + 1);
     return;
   }
-  if (t.dataset.d) { st.deck = t.dataset.d; st.flippedTiles.clear(); startRound(); persist(); return render(); }
+  if (t.dataset.d) { st.deck = t.dataset.d; st.confirmReset = false; st.flippedTiles.clear(); startRound(); persist(); return render(); }
   if (t.dataset.v) { st.view = t.dataset.v; persist(); return render(); }
   if (t.dataset.f) { st.front = t.dataset.f; st.flipped = false; st.flippedTiles.clear(); persist(); return render(); }
   switch (t.id) {
     case 'shuffle': st.flippedTiles.clear(); startRound(); return render();
     case 'card': return st.view === 'learn' ? flip() : undefined;
     case 'next': return nextQuiz();
+    case 'reset': st.confirmReset = true; renderChrome(); return $('#reset-no')?.focus();
+    case 'reset-no': st.confirmReset = false; return renderChrome();
+    case 'reset-yes':
+      deck().cards.forEach(c => st.known.delete(c.id));
+      st.confirmReset = false; persist(); startRound(); return render();
     case 'yes': return answer(true);
     case 'no': return answer(false);
     case 'say': return say(byId[st.queue[st.i]]);

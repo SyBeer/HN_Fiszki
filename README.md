@@ -3,7 +3,7 @@
 Fiszki obrazek / słowo dla Hani, na podstawie podręcznika *Arriba Joven 1* (s. 28, ćw. 3.2 i 3.3) i karty „La ropa”.
 91 kart w 3 taliach: La ropa, Descripción física, Carácter. Rysunki to SVG w kodzie, bez zewnętrznych obrazków.
 
-Wersja: **1.3.0**
+Wersja: **1.4.0**
 
 ## Widoki
 - **Nauka** - odwracanie kart, „Umiem” / „Jeszcze nie”.
@@ -27,4 +27,4 @@ git archive HEAD | ssh raspi4@192.168.1.4 'mkdir -p ~/fiszki-hiszpanski && tar -
 ssh raspi4@192.168.1.4 'cd ~/fiszki-hiszpanski && docker compose up -d --build'
 ```
 
-Postęp nauki („Umiem”) zapisuje się w przeglądarce danego urządzenia.
+Postęp nauki („Umiem”) zapisuje się w przeglądarce danego urządzenia. Przycisk „Wyczyść wyniki” (obok licznika) zeruje wyniki wybranej talii; w talii „Wszystko” - wszystkie.
