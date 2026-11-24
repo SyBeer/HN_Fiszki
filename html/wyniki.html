@@ -102,7 +102,7 @@ footer { color: var(--muted); font-size: 12px; }
     </div>
   </section>
 
-  <footer>Fiszki Arriba Joven · wyniki z serwera · v1.9.0</footer>
+  <footer>Fiszki Arriba Joven · wyniki z serwera · v1.10.0</footer>
 </div>
 
 <script>
@@ -110,10 +110,10 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 const KEY = 'fiszki-admin';
 const tok = { get() { try { return localStorage.getItem(KEY) || ''; } catch { return ''; } }, set(v) { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch { } } };
-const LESSON = { l1: 'Lekcja 1' };
-const DECK = { ropa: 'La ropa', fisico: 'Descripción física', caracter: 'Carácter', todo: 'Wszystko' };
+const LESSON = { l1: 'Lekcja 1', l2: 'Lekcja 2' };
+const DECK = { l2cho: '-cho', l2ierto: '-ierto', l2uelto: '-uelto', l2to: '-to', ropa: 'La ropa', fisico: 'Descripción física', caracter: 'Carácter', todo: 'Wszystko' };
 const GOOD = new Set(['dobrze', 'akcent', 'literowka', 'rodzajnik', 'umiem']);
-const LABEL = { zle: 'źle', nie_wiem: 'nie wiem', nie_umiem: 'jeszcze nie', akcent: 'bez akcentu', literowka: 'literówka', rodzajnik: 'zły rodzajnik' };
+const LABEL = { zle: 'źle', nie_wiem: 'nie wiem', nie_umiem: 'jeszcze nie', akcent: 'bez akcentu', literowka: 'literówka', rodzajnik: 'zły rodzajnik', regular: 'forma regularna', auxiliar: 'zły „haber”' };
 let rows = [], token = tok.get();
 
 const fmtDay = d => d.toLocaleDateString('pl-PL', { weekday: 'short', day: 'numeric', month: 'short' });

@@ -158,6 +158,13 @@ button:focus-visible, .card:focus-visible, .tile:focus-visible { outline: 3px so
 .es .fem { font-weight: 500; }
 .pl { font: 700 11.5cqi/1 var(--f-pen); color: var(--pen); text-wrap: balance; }
 .ex { font: 400 4.4cqi/1.3 var(--f-body); font-style: italic; color: #5b5e66; }
+.verb { font: 800 10cqi/1.05 var(--f-display); letter-spacing: -.01em; text-wrap: balance; overflow-wrap: anywhere; }
+.verb .arrow { font-weight: 500; opacity: .5; }
+.verb b { color: var(--pen); }
+.side.back .verb { font-size: 8.5cqi; }
+.gapq { font: 600 6.6cqi/1.3 var(--f-body); text-wrap: balance; }
+.gapq .blank { display: inline-block; width: 18cqi; border-bottom: .6cqi solid var(--pi); margin: 0 1cqi; }
+.expl { font: 700 6cqi/1.1 var(--f-pen); color: var(--pen); }
 .say {
   position: absolute; top: 3.5cqi; right: 3.5cqi; width: 11cqi; height: 11cqi; min-width: 32px; min-height: 32px;
   border-radius: 50%; border: 1px solid var(--plate-line); background: var(--plate); color: var(--pi);
@@ -184,7 +191,11 @@ kbd { font: 500 11px var(--f-body); border: 1px solid var(--line); border-bottom
 .tile { aspect-ratio: 4 / 5; position: relative; }
 .cell { display: grid; gap: 6px; min-width: 0; }
 .cat { font: 500 11px/1.2 var(--f-body); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); display: flex; align-items: center; gap: 6px; }
-.cat::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--cat); flex: none; }
+.cat::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--cat, var(--accent)); flex: none; }
+.cat.l2cho { --cat: var(--e-green); }
+.cat.l2ierto { --cat: var(--e-blue); }
+.cat.l2uelto { --cat: var(--gold); }
+.cat.l2to { --cat: var(--red); }
 .cat.ropa { --cat: var(--e-blue); }
 .cat.fisico { --cat: var(--gold); }
 .cat.caracter { --cat: var(--red); }
@@ -278,13 +289,8 @@ footer { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; g
         <button data-v="all">Wszystkie</button>
       </div>
     </div>
-    <div class="grp"><span class="seg-label">Na przodzie</span>
-      <div class="seg" id="fronts">
-        <button data-f="img">Obrazek</button>
-        <button data-f="es">Hiszpański</button>
-        <button data-f="pl">Polski</button>
-        <button data-f="mix">Mieszane</button>
-      </div>
+    <div class="grp"><span class="seg-label" id="front-label">Na przodzie</span>
+      <div class="seg" id="fronts"></div>
     </div>
     <button class="btn" id="shuffle" type="button">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
@@ -301,11 +307,11 @@ footer { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; g
   <footer>
     <span id="source"></span>
     <a href="wyniki.html">Wyniki (dla rodzica)</a>
-    <span>v1.9.0</span>
+    <span>v1.10.0</span>
   </footer>
 </div>
 
-<script src="check.js"></script>
+<script src="check.js?v=1.10.0"></script>
 <script>
 /* ===== rysowanie ===== */
 const CL = 'var(--cl)', NS = 'stroke:none';
@@ -632,7 +638,47 @@ const CARACTER = [
   W('tacaño', 'tacaña', 'skąpy / skąpa', 'ser', 'Es tacaño.', () => face({ hair: 'short', hc: 'grey', eyes: 'side', mouth: 'smirk', brows: 'angry', extra: MONEYBAG })),
 ].map((c, i) => ({ ...c, id: 'c' + (i + 1), deck: 'caracter' }));
 
-const ALL = [...ROPA, ...FISICO, ...CARACTER];
+/* ---- lekcja 2: participios irregulares ---- */
+const PENCIL = band('M56 82 L84 44', 7, 'var(--gold)') + P('M56 82 L53.6 90 L60.6 85.8 Z', 'var(--skin)', 'stroke-width:1.4');
+const VERB_PICS = {
+  decir: () => face({ hair: 'short', hc: 'brown', mouth: 'o', extra: bubble(54, 4, 44, 15, '¡Es verdad!', 66, 30, 7.5) }),
+  hacer: () => svg(R(16, 18, 56, 70, 'var(--cl)', '', 4) + [34, 44, 54, 64, 74].map(y => L(`M24 ${y} L64 ${y}`, 'stroke-width:1.3;stroke:var(--cl2)')).join('') + [26, 40, 54, 68, 82].map(y => C(16, y, 2.4, 'var(--plate)', 'stroke-width:1.4')).join('') + TX(44, 30, 'Deberes', 8) + PENCIL),
+  satisfacer: () => face({ hair: 'long', hc: 'blond', eyes: 'happy', mouth: 'big', blush: true, extra: STAR(82, 20, 6) + STAR(18, 26, 4) + STAR(88, 40, 3) }),
+  abrir: () => svg(R(22, 14, 56, 72, 'var(--e-light)') + C(60, 34, 8, 'var(--gold)') + P('M22 14 L6 22 L6 78 L22 86 Z', 'var(--cl2)') + P('M78 14 L94 22 L94 78 L78 86 Z', 'var(--cl2)') + L('M12 34 L16 34 M12 50 L16 50 M12 66 L16 66 M84 34 L88 34 M84 50 L88 50 M84 66 L88 66', 'stroke-width:1.4') + R(14, 86, 72, 7, 'var(--cl)', '', 2)),
+  cubrir: () => svg(L('M50 4 L50 16 M45 11 L50 16 L55 11', 'stroke-width:2.4') + P('M20 38 Q50 20 80 38 Z', 'var(--e-grey)') + C(50, 26, 3.6, 'var(--pi)', NS) + P('M24 46 L76 46 L72 86 Q50 92 28 86 Z', 'var(--red)') + L('M24 54 L14 54 M76 54 L86 54', 'stroke-width:3.4')),
+  descubrir: () => svg(E(42, 46, 28, 7, 'none', 'stroke:var(--gold);stroke-width:2.6') + C(42, 46, 16, 'var(--e-light)') + P('M28 50 Q42 44 56 50', 'none', 'stroke-width:1.4') + C(62, 60, 17, 'rgb(255 255 255 / .4)', 'stroke-width:3.6') + band('M74 73 L90 90', 6, 'var(--h-brown)') + STAR(16, 18, 4) + STAR(84, 16, 3)),
+  volver: () => svg(R(26, 56, 48, 32, 'var(--cl)') + P('M20 58 L50 34 L80 58 Z', 'var(--red)') + R(44, 70, 12, 18, 'var(--h-brown)') + L('M90 50 C90 18 60 8 42 18', 'stroke:var(--e-blue);stroke-width:3.6') + P('M36 12 L40 26 L48 16 Z', 'var(--e-blue)', 'stroke:var(--e-blue)')),
+  devolver: () => svg(P('M22 36 L50 42 L78 36 L78 84 L50 90 L22 84 Z', 'var(--e-green)') + L('M50 42 L50 90') + L('M28 48 L44 51 M28 56 L44 59 M56 51 L72 48 M56 59 L72 56', 'stroke-width:1.4') + L('M70 24 C70 8 32 8 32 22', 'stroke:var(--e-blue);stroke-width:3.6') + P('M26 18 L32 30 L38 18 Z', 'var(--e-blue)', 'stroke:var(--e-blue)')),
+  envolver: () => svg(R(24, 44, 52, 44, 'var(--red)') + R(46, 44, 8, 44, 'var(--gold)', 'stroke-width:1.4') + R(20, 34, 60, 12, 'var(--red)') + R(46, 34, 8, 12, 'var(--gold)', 'stroke-width:1.4') + P('M50 34 C38 14 26 26 46 34 Z', 'var(--gold)') + P('M50 34 C62 14 74 26 54 34 Z', 'var(--gold)')),
+  resolver: () => svg(R(16, 14, 60, 72, 'var(--cl)', '', 4) + TX(46, 38, '2 + 3 =', 13) + TX(46, 64, '5', 22, 'fill:var(--e-green)') + band('M60 74 L68 82 L88 56', 4, 'var(--e-green)')),
+  escribir: () => svg(R(12, 16, 60, 70, 'var(--cl)', '', 3) + [32, 44, 56].map(y => L(`M20 ${y} Q24 ${y - 4} 28 ${y} Q32 ${y + 4} 36 ${y} Q40 ${y - 4} 44 ${y} Q48 ${y + 4} 52 ${y} Q56 ${y - 4} 60 ${y}`, 'stroke-width:1.5')).join('') + PENCIL),
+  describir: () => svg(R(8, 30, 52, 42, 'var(--e-light)', '', 2) + P('M10 70 L26 48 L36 60 L44 52 L58 70 Z', 'var(--e-green)', 'stroke-width:1.6') + C(48, 40, 4.4, 'var(--gold)', 'stroke-width:1.4') + bubble(52, 6, 44, 16, 'Hay...', 44, 32, 8.5)),
+  poner: () => svg(R(8, 62, 84, 6, 'var(--h-brown)') + L('M16 68 L16 94 M84 68 L84 94', 'stroke-width:4') + E(46, 57, 17, 4.6, 'var(--cl)') + E(46, 56, 9, 2.4, 'none', 'stroke-width:1.2') + L('M20 40 L20 58 M17 40 L17 47 M23 40 L23 47 M17 47 Q20 50 23 47', 'stroke-width:1.8') + L('M72 38 L72 58', 'stroke-width:2.8') + P('M78 34 L88 34 L87 58 L79 58 Z', 'var(--e-light)')),
+  romper: () => svg(P('M30 18 L47 18 L44 38 L49 50 L42 64 L46 88 L32 88 C22 70 22 42 30 18 Z', 'var(--e-blue)') + `<g transform="rotate(10 60 60)">${P('M54 18 L70 18 C78 42 78 70 68 88 L54 88 L50 64 L57 50 L52 38 Z', 'var(--e-blue)')}</g>` + P('M14 92 L20 86 L22 94 Z', 'var(--e-blue)', 'stroke-width:1.4') + P('M82 94 L88 88 L92 95 Z', 'var(--e-blue)', 'stroke-width:1.4') + L('M50 10 L48 4 M58 10 L62 4 M42 10 L36 6', 'stroke-width:1.6')),
+  ver: () => svg(P('M6 50 Q50 12 94 50 Q50 88 6 50 Z', 'var(--eye-white)') + C(50, 50, 17, 'var(--e-brown)') + C(50, 50, 7.5, 'var(--pi)', NS) + C(55, 45, 3, 'var(--eye-white)', NS) + [-24, -12, 0, 12, 24].map(d => L(`M${50 + d} ${31 + Math.abs(d) * .3} L${50 + d * 1.25} ${21 + Math.abs(d) * .3}`, 'stroke-width:2')).join('')),
+  morir: () => svg(L('M50 62 C50 40 58 30 68 36', 'stroke:var(--e-green);stroke-width:3') + FLOWER(70, 44, 5, 'var(--e-grey)') + P('M50 54 Q40 52 36 58 Q44 60 50 56 Z', 'var(--e-grey)', 'stroke-width:1.4') + R(26, 60, 48, 9, 'var(--h-brown)') + P('M30 69 L70 69 L66 92 L34 92 Z', 'var(--h-brown)') + E(84, 90, 3.4, 1.6, 'var(--e-grey)', 'stroke-width:1.2') + E(18, 92, 3.4, 1.6, 'var(--e-grey)', 'stroke-width:1.2')),
+};
+const V = (deck, inf, es, pl, gapS, gapA, ex, exPl) => ({ kind: 'verb', deck, inf, es, pl, gap: { s: gapS, a: gapA }, ex, exPl, draw: VERB_PICS[inf] });
+const VERBS = [
+  V('l2cho', 'decir', 'dicho', 'mówić', 'Mi hermano ___ (decir) la verdad.', 'ha dicho', 'Mi hermano ha dicho la verdad.', 'Mój brat powiedział prawdę.'),
+  V('l2cho', 'hacer', 'hecho', 'robić', 'Hoy (yo) ___ (hacer) los deberes.', 'he hecho', 'Hoy he hecho los deberes.', 'Dziś odrobiłam lekcje.'),
+  V('l2cho', 'satisfacer', 'satisfecho', 'zadowalać', 'El regalo nos ___ (satisfacer) a todos.', 'ha satisfecho', 'El regalo nos ha satisfecho a todos.', 'Prezent zadowolił nas wszystkich.'),
+  V('l2ierto', 'abrir', 'abierto', 'otwierać', 'Hoy (yo) ___ (abrir) la ventana.', 'he abierto', 'Hoy he abierto la ventana.', 'Dziś otworzyłam okno.'),
+  V('l2ierto', 'cubrir', 'cubierto', 'przykrywać', 'Mamá ___ (cubrir) la olla.', 'ha cubierto', 'Mamá ha cubierto la olla.', 'Mama przykryła garnek.'),
+  V('l2ierto', 'descubrir', 'descubierto', 'odkrywać', 'Los científicos ___ (descubrir) un planeta.', 'han descubierto', 'Los científicos han descubierto un planeta.', 'Naukowcy odkryli planetę.'),
+  V('l2uelto', 'volver', 'vuelto', 'wracać', 'Papá ___ (volver) a casa.', 'ha vuelto', 'Papá ha vuelto a casa.', 'Tata wrócił do domu.'),
+  V('l2uelto', 'devolver', 'devuelto', 'oddawać', '(Yo) ___ (devolver) el libro a la biblioteca.', 'he devuelto', 'He devuelto el libro a la biblioteca.', 'Oddałam książkę do biblioteki.'),
+  V('l2uelto', 'envolver', 'envuelto', 'owijać, pakować', 'Mamá ___ (envolver) el regalo.', 'ha envuelto', 'Mamá ha envuelto el regalo.', 'Mama zapakowała prezent.'),
+  V('l2uelto', 'resolver', 'resuelto', 'rozwiązywać', '(Nosotros) ___ (resolver) el problema.', 'hemos resuelto', 'Hemos resuelto el problema.', 'Rozwiązaliśmy problem.'),
+  V('l2to', 'escribir', 'escrito', 'pisać', '(Yo) ___ (escribir) una carta.', 'he escrito', 'He escrito una carta.', 'Napisałam list.'),
+  V('l2to', 'describir', 'descrito', 'opisywać', 'La profesora ___ (describir) la foto.', 'ha descrito', 'La profesora ha descrito la foto.', 'Pani nauczycielka opisała zdjęcie.'),
+  V('l2to', 'poner', 'puesto', 'kłaść, stawiać', '(Yo) ___ (poner) la mesa.', 'he puesto', 'He puesto la mesa.', 'Nakryłam do stołu.'),
+  V('l2to', 'romper', 'roto', 'łamać, tłuc', 'El perro ___ (romper) el jarrón.', 'ha roto', 'El perro ha roto el jarrón.', 'Pies stłukł wazon.'),
+  V('l2to', 'ver', 'visto', 'widzieć', '¿(Tú) ___ (ver) la película?', 'has visto', '¿Has visto la película?', 'Widziałaś ten film?'),
+  V('l2to', 'morir', 'muerto', 'umierać', 'Mi planta ___ (morir).', 'ha muerto', 'Mi planta ha muerto.', 'Moja roślinka umarła.'),
+].map((c, i) => ({ ...c, id: 'l2v' + (i + 1) }));
+
+const ALL = [...ROPA, ...FISICO, ...CARACTER, ...VERBS];
 
 /* ===== lekcje (SPEC.md) - nowa lekcja = nowy wpis; karty z własnym prefiksem id, np. l2r1 ===== */
 const LESSONS = [
@@ -640,11 +686,21 @@ const LESSONS = [
     id: 'l1', n: 1, title: 'Opis wyglądu, charakteru i ubrania',
     source: 'Arriba Joven 1, s. 28 (ćw. 3.2 i 3.3) oraz karta „La ropa”',
     thumbs: ['r28', 'f1', 'c13'],
+    frontLabel: 'Na przodzie',
+    fronts: [['img', 'Obrazek'], ['es', 'Hiszpański'], ['pl', 'Polski'], ['mix', 'Mieszane']],
     decks: [
       { id: 'ropa', name: 'La ropa', cards: ROPA },
       { id: 'fisico', name: 'Descripción física', cards: FISICO },
       { id: 'caracter', name: 'Carácter', cards: CARACTER },
     ],
+  },
+  {
+    id: 'l2', n: 2, title: 'Participios irregulares',
+    source: 'nieregularne imiesłowy do pretérito perfecto (he abierto, ha dicho...)',
+    thumbs: ['l2v4', 'l2v11', 'l2v14'],
+    frontLabel: 'Ćwiczenie',
+    fronts: [['inf', 'Bezokolicznik → participio'], ['part', 'Participio → bezokolicznik'], ['gap', 'Zdanie z luką'], ['mix', 'Mieszane']],
+    decks: ['cho', 'ierto', 'uelto', 'to'].map(e => ({ id: 'l2' + e, name: '-' + e, cards: VERBS.filter(c => c.deck === 'l2' + e) })),
   },
 ];
 const lessonById = id => LESSONS.find(l => l.id === id);
@@ -662,7 +718,7 @@ const st = {
   lesson: lessonById(saved.lesson) ? saved.lesson : '',
   deck: DECKS.some(d => d.id === saved.deck) ? saved.deck : DECKS[0].id,
   view: ['learn', 'quiz', 'all'].includes(saved.view) ? saved.view : 'learn',
-  front: ['img', 'es', 'pl', 'mix'].includes(saved.front) ? saved.front : 'img',
+  front: typeof saved.front === 'string' ? saved.front : 'img',
   known: new Set(Array.isArray(saved.known) ? saved.known : []),
   sound: saved.sound !== false,
   student: typeof saved.student === 'string' ? saved.student : '', askName: false, session: '',
@@ -675,9 +731,11 @@ const cache = {};
 const pic = c => cache[c.id] ??= c.draw();
 const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
-const FRONTS = ['img', 'es', 'pl'];
-function shuffleMix() { st.mix = Object.fromEntries(ALL.map(c => [c.id, FRONTS[Math.floor(Math.random() * 3)]])); }
-const frontOf = c => st.front === 'mix' ? st.mix[c.id] || 'img' : st.front;
+const cardLesson = Object.fromEntries(LESSONS.flatMap(l => lessonCards(l).map(c => [c.id, l])));
+const mixable = l => l.fronts.map(f => f[0]).filter(f => f !== 'mix');
+function shuffleMix() { st.mix = Object.fromEntries(ALL.map(c => { const m = mixable(cardLesson[c.id]); return [c.id, m[Math.floor(Math.random() * m.length)]]; })); }
+const frontOf = c => st.front === 'mix' ? st.mix[c.id] || mixable(cardLesson[c.id])[0] : st.front;
+function ensureFront() { const ids = lessonById(st.lesson).fronts.map(f => f[0]); if (!ids.includes(st.front)) st.front = ids[0]; }
 function startRound(ids) {
   shuffleMix();
   st.session = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
@@ -695,7 +753,7 @@ function say(c, manual = false) {
   if (!st.sound && !manual) return;
   try {
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance((c.art ? c.art + ' ' : '') + c.es.replace(' / ', ', '));
+    const u = new SpeechSynthesisUtterance(c.kind === 'verb' ? `${c.inf}, ${c.es}` : (c.art ? c.art + ' ' : '') + c.es.replace(' / ', ', '));
     u.lang = 'es-ES'; if (esVoice) u.voice = esVoice; u.rate = .9;
     speechSynthesis.speak(u);
   } catch { }
@@ -708,7 +766,17 @@ const CAT = Object.fromEntries(LESSONS.flatMap(l => l.decks.map(d => [d.id, d.na
 const catHTML = c => `<div class="cat ${c.deck}" lang="es">${CAT[c.deck]}</div>`;
 const esHTML = c => `${c.tag ? `<span class="chip">${c.tag}</span>` : ''}<div class="es" lang="es">${c.art ? `<span class="art">${c.art}</span> ` : ''}${c.es}${c.esF ? `<span class="fem"> / ${c.esF}</span>` : ''}</div>`;
 const plHTML = c => `<div class="pl">${c.pl}</div>`;
+function verbSides(c) {
+  const f = frontOf(c), img = `<div class="ill">${pic(c)}</div>`;
+  const gap = esc(c.gap.s).replace('___', '<span class="blank"></span>');
+  const front = f === 'part' ? `${img}<div class="verb" lang="es">${c.es}</div>`
+    : f === 'gap' ? `${img}<div class="gapq" lang="es">${gap}</div>`
+    : `${img}<div class="verb" lang="es">${c.inf}</div>${plHTML(c)}`;
+  const back = `${img}<div class="verb" lang="es">${c.inf} <span class="arrow">→</span> <b>${c.es}</b></div>${plHTML(c)}<div class="ex" lang="es">${c.ex}</div><div class="expl">${c.exPl}</div>`;
+  return `<div class="side front">${front}</div><div class="side back">${back}</div>`;
+}
 function sides(c) {
+  if (c.kind === 'verb') return verbSides(c);
   const f = frontOf(c);
   const front = f === 'img' ? `<div class="side front pic"><div class="ill">${pic(c)}</div></div>`
     : `<div class="side front">${f === 'es' ? esHTML(c) : plHTML(c)}</div>`;
@@ -747,7 +815,7 @@ async function flush() {
 function meter(c, view, result, answer = '') {
   if (!st.student) return;
   outbox.set([...outbox.get(), {
-    student: st.student, lesson: st.lesson, card: c.id, word: c.es, deck: st.deck, view, front: frontOf(c),
+    student: st.student, lesson: st.lesson, card: c.id, word: c.kind === 'verb' ? `${c.inf} → ${c.es}` : c.es, deck: st.deck, view, front: frontOf(c),
     answer: answer.slice(0, 200), result, session: st.session,
   }]);
   flush();
@@ -769,7 +837,9 @@ function renderChrome() {
   $('#student').textContent = st.student ? `Uczeń: ${st.student}` : 'Kto ćwiczy?';
   $('#sound').setAttribute('aria-pressed', st.sound);
   $('#sound').innerHTML = (st.sound ? SPEAKER : SPEAKER_OFF).replace('<svg', '<svg width="16" height="16"') + (st.sound ? 'Dźwięk włączony' : 'Dźwięk wyłączony');
-  document.querySelectorAll('#fronts button').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === st.front));
+  const L = lessonById(st.lesson);
+  $('#front-label').textContent = L.frontLabel;
+  $('#fronts').innerHTML = L.fronts.map(([id, label]) => `<button type="button" data-f="${id}" aria-pressed="${id === st.front}">${label}</button>`).join('');
   const cards = deck().cards, k = cards.filter(c => st.known.has(c.id)).length;
   $('#stat').innerHTML = st.confirmReset
     ? `<span class="confirm" role="alert">Wyczyścić wyniki: ${deck().name}? <button class="link danger" id="reset-yes" type="button">Tak, wyczyść</button><button class="link" id="reset-no" type="button">Anuluj</button></span>`
@@ -815,16 +885,20 @@ function renderAll() {
 }
 
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-const quizLang = c => frontOf(c) === 'es' ? 'pl' : 'es';
-function quizAnswer(c, lang) { return lang === 'es' ? `${c.art ? c.art + ' ' : ''}${c.es}${c.esF ? ' / ' + c.esF : ''}` : c.pl; }
+const VERB_EXPECT = { inf: 'part', part: 'inf', gap: 'gap' };
+const quizLang = c => c.kind === 'verb' ? VERB_EXPECT[frontOf(c)] : frontOf(c) === 'es' ? 'pl' : 'es';
+const VERB_LABEL = { part: 'Napisz participio', inf: 'Napisz bezokolicznik', gap: 'Uzupełnij lukę (haber + participio)' };
+function quizAnswer(c, lang) { if (c.kind === 'verb') return lang === 'inf' ? c.inf : lang === 'gap' ? c.gap.a : c.es; return lang === 'es' ? `${c.art ? c.art + ' ' : ''}${c.es}${c.esF ? ' / ' + c.esF : ''}` : c.pl; }
 function renderQuiz() {
   if (!st.student || st.askName) return renderName();
   const n = st.queue.length;
   if (st.i >= n) return renderLearn();
   const c = byId[st.queue[st.i]], lang = quizLang(c), r = st.q, copy = st.qMode === 'copy';
   const good = st.i + (r || copy ? 1 : 0) - st.missed.length;
-  const ans = `<b lang="${lang}">${esc(quizAnswer(c, lang))}</b>`;
+  const ans = `<b lang="${lang === 'pl' ? 'pl' : 'es'}">${esc(quizAnswer(c, lang))}</b>`;
   const msg = !r ? '' : r.copied ? ['Przepisane!', r.note === 'akcent' ? `Uważaj na akcent: ${ans}` : r.note === 'literowka' ? `Poprawna pisownia: ${ans}` : ans]
+    : !r.ok && r.note === 'regular' ? ['Nie tym razem', `To forma regularna, a <b lang="es">${c.inf}</b> jest nieregularny: ${ans}`]
+    : !r.ok && r.note === 'auxiliar' ? ['Prawie', `Participio dobrze, popraw „haber”: ${ans}`]
     : !r.ok ? ['Nie tym razem', `Poprawnie: ${ans}`]
     : r.note === 'akcent' ? ['Dobrze!', `Uważaj na akcent: ${ans}`]
     : r.note === 'literowka' ? ['Prawie dobrze!', `Poprawna pisownia: ${ans}`]
@@ -837,12 +911,12 @@ function renderQuiz() {
       <div class="inner">${sides(c)}</div>
     </div>
     <form class="quiz" id="quiz" autocomplete="off">
-      <label class="qlabel" for="answer">${copy && !r ? 'Przepisz odpowiedź z karty' : lang === 'es' ? 'Napisz po hiszpańsku' : 'Napisz po polsku'}</label>
+      <label class="qlabel" for="answer">${copy && !r ? 'Przepisz odpowiedź z karty' : VERB_LABEL[lang] || (lang === 'es' ? 'Napisz po hiszpańsku' : 'Napisz po polsku')}</label>
       <div class="qrow">
-        <input id="answer" name="answer" type="text" lang="${lang}" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done" value="${esc(st.qInput)}" ${r ? 'disabled' : ''}>
+        <input id="answer" name="answer" type="text" lang="${lang === 'pl' ? 'pl' : 'es'}" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done" value="${esc(st.qInput)}" ${r ? 'disabled' : ''}>
         <button class="btn primary" type="submit" ${r ? 'hidden' : ''}>Sprawdź</button>
       </div>
-      ${lang === 'es' && !r ? `<div class="chars" aria-label="Litery hiszpańskie">${['á', 'é', 'í', 'ó', 'ú', 'ü', 'ñ', '¡', '¿'].map(ch => `<button class="ch" type="button" data-ch="${ch}">${ch}</button>`).join('')}</div>` : ''}
+      ${lang !== 'pl' && !r ? `<div class="chars" aria-label="Litery hiszpańskie">${['á', 'é', 'í', 'ó', 'ú', 'ü', 'ñ', '¡', '¿'].map(ch => `<button class="ch" type="button" data-ch="${ch}">${ch}</button>`).join('')}</div>` : ''}
       ${!r && !copy ? '<button class="btn" id="dunno" type="button">Nie wiem - pokaż odpowiedź</button>' : ''}
     </form>
     ${copy && !r ? (st.qCopyErr
@@ -856,20 +930,20 @@ function renderQuiz() {
 }
 function submitQuiz() {
   const c = byId[st.queue[st.i]], val = $('#answer').value;
-  const r = FiszkiCheck.check(c, val, quizLang(c));
+  const r = c.kind === 'verb' ? FiszkiCheck.checkVerb(c, val, quizLang(c)) : FiszkiCheck.check(c, val, quizLang(c));
   if (!r) return $('#answer').focus();
   if (st.qMode === 'copy') {
     st.qInput = val;
     if (r.ok) st.q = { ...r, copied: true }; else st.qCopyErr = true;
     render();
-    if (r.ok && quizLang(c) === 'es') say(c);
+    if (r.ok && quizLang(c) !== 'pl') say(c);
     return;
   }
   st.q = r; st.qInput = val;
-  meter(c, 'quiz', r.ok ? r.note || 'dobrze' : 'zle', val);
+  meter(c, 'quiz', r.ok ? r.note || 'dobrze' : ['regular', 'auxiliar'].includes(r.note) ? r.note : 'zle', val);
   if (r.ok) st.known.add(c.id); else { st.known.delete(c.id); st.missed.push(c.id); }
   persist(); render();
-  if (quizLang(c) === 'es') say(c);
+  if (quizLang(c) !== 'pl') say(c);
 }
 function nextQuiz() { st.i++; st.q = null; st.qInput = ''; st.qMode = 'ask'; st.qCopyErr = false; render(); }
 function dontKnow() {
@@ -878,7 +952,7 @@ function dontKnow() {
   meter(c, 'quiz', 'nie_wiem');
   st.known.delete(c.id); st.missed.push(c.id);
   persist(); render();
-  if (quizLang(c) === 'es') say(c);
+  if (quizLang(c) !== 'pl') say(c);
 }
 
 function renderHome() {
@@ -905,12 +979,12 @@ function render() {
   const l = lessonById(st.lesson);
   $('#sub').innerHTML = `<button class="link" id="home-btn" type="button">← Lekcje</button> · Lekcja ${l.n}: ${l.title}. Kliknij kartę, żeby ją odwrócić.`;
   $('#source').textContent = `Słówka: ${l.source}.`;
-  renderChrome(); ({ learn: renderLearn, quiz: renderQuiz, all: renderAll })[st.view]();
+  ensureFront(); renderChrome(); ({ learn: renderLearn, quiz: renderQuiz, all: renderAll })[st.view]();
 }
 function openLesson(id) {
   const l = lessonById(id); if (!l) return;
   if (st.lesson !== id) { DECKS = decksOf(l); if (!DECKS.some(d => d.id === st.deck)) st.deck = DECKS[0].id; }
-  st.lesson = id; st.confirmReset = false; st.flippedTiles.clear();
+  st.lesson = id; ensureFront(); st.confirmReset = false; st.flippedTiles.clear();
   startRound(); persist(); render(); scrollTo(0, 0);
 }
 

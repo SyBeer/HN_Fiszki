@@ -65,7 +65,22 @@
     return { ok: true, note: r === 'exact' ? '' : r };
   }
 
-  const api = { check, clean, strip, lev };
+  /* Czasowniki (lekcja 2): expect = 'part' | 'inf' | 'gap'. Bez tolerancji literówek; note: '' | 'akcent' | 'regular' | 'auxiliar'. */
+  function checkVerb(card, input, expect) {
+    const x = clean(input || '');
+    if (!x) return null;
+    const want = clean(expect === 'inf' ? card.inf : expect === 'gap' ? card.gap.a : card.es);
+    if (x === want) return { ok: true, note: '' };
+    if (strip(x) === strip(want)) return { ok: true, note: 'akcent' };
+    if (expect === 'inf') return { ok: false, note: '' };
+    const regular = card.inf.slice(0, -2) + (card.inf.endsWith('ar') ? 'ado' : 'ido');
+    const last = strip(x.split(' ').pop());
+    if (last === strip(regular)) return { ok: false, note: 'regular' };
+    if (expect === 'gap' && last === strip(clean(card.es))) return { ok: false, note: 'auxiliar' };
+    return { ok: false, note: '' };
+  }
+
+  const api = { check, checkVerb, clean, strip, lev };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.FiszkiCheck = api;
 })(typeof window !== 'undefined' ? window : globalThis);

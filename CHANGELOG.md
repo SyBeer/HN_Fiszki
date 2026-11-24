@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.10.0 - 2026-11-24
+- Lekcja 2: Participios irregulares - 16 czasowników z rysunkami, talie wg końcówek (-cho, -ierto, -uelto, -to).
+- Tryby lekcji 2: bezokolicznik → participio, participio → bezokolicznik, zdanie z luką, mieszane.
+- Sprawdzanie czasowników bez tolerancji literówek, z podpowiedzią dla formy regularnej (abrido) i złego „haber”.
+- Serwer przyjmuje nowe tryby i wyniki (`regular`, `auxiliar`); raport je nazywa.
+- check.js ładowany z numerem wersji (telefony nie trzymają starej kopii).
+
 ## 1.9.0 - 2026-11-24
 - Panel wyboru lekcji na starcie; Lekcja 1 „Opis wyglądu, charakteru i ubrania” z trzema taliami, przycisk „← Lekcje”.
 - Wyniki zapisują lekcję (pole `lesson`, migracja starej bazy); raport pokazuje lekcję przy rundzie.

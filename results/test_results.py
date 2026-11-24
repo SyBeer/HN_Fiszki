@@ -39,6 +39,12 @@ class TestValidate(unittest.TestCase):
         e = results.validate(entry(lesson="l2", card="l2r1", deck="familia"))
         self.assertEqual((e["lesson"], e["card"], e["deck"]), ("l2", "l2r1", "familia"))
 
+    def test_verb_lesson_modes_and_results(self):
+        for front in ("inf", "part", "gap"):
+            for result in ("regular", "auxiliar", "dobrze"):
+                e = results.validate(entry(lesson="l2", card="l2v1", deck="l2cho", front=front, result=result))
+                self.assertEqual((e["front"], e["result"]), (front, result))
+
     def test_learn_entry_without_answer(self):
         e = results.validate(entry(view="nauka", result="umiem", answer=None))
         self.assertEqual(e["answer"], "")
@@ -46,7 +52,7 @@ class TestValidate(unittest.TestCase):
     def test_rejects_bad_fields(self):
         bad = [
             entry(student=""), entry(student="x" * 41), entry(card="R1!"), entry(card="1r"), entry(card="r12345678"), entry(lesson="L 1"),
-            entry(result="super"), entry(view="test"), entry(front="video"), entry(deck="Math!"),
+            entry(result="super"), entry(view="test"), entry(front="VIDEO"), entry(front="abcdefghi"), entry(deck="Math!"),
             entry(answer="a" * 201), entry(word="w" * 81), entry(session="ZZ!"), "nie-obiekt",
             entry(view="nauka", result="dobrze"), entry(view="quiz", result="umiem"),
         ]

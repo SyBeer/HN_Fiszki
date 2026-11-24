@@ -58,3 +58,22 @@ Cel: materiał będzie przybywał lekcja po lekcji; uczeń najpierw wybiera lekc
 ### Kryteria akceptacji
 - Testy serwera pokrywają pole `lesson`, migrację starej bazy i nowe formaty id.
 - Panel działa na telefonie (375 px) bez przewijania w bok.
+
+## Lekcja 2: Participios irregulares (od 1.10.0)
+Źródło: lista nieregularnych imiesłowów od usera (2026-11-24), 16 czasowników (descubrir był na liście dwa razy - jedna karta).
+
+- Talie wg końcówki: **-cho** (decir, hacer, satisfacer), **-ierto** (abrir, cubrir, descubrir), **-uelto** (volver, devolver, envolver, resolver), **-to** (escribir, describir, poner, romper, ver, morir) + Wszystko.
+- Karta: obrazek czynności, bezokolicznik, znaczenie po polsku, participio, zdanie w pretérito perfecto z luką i jego tłumaczenie.
+- Tryby (zamiast "Na przodzie" w tej lekcji): **Bezokolicznik → participio**, **Participio → bezokolicznik**, **Zdanie z luką** (np. "Hoy (yo) ___ (abrir) la ventana." → "he abierto"), **Mieszane**.
+- Sprawdzanie (ostrzejsze niż słówka, bo ćwiczymy pisownię):
+  - wielkość liter, spacje i ¡!¿? bez znaczenia; brak akcentu = zaliczone z uwagą;
+  - **bez tolerancji literówek**, forma żeńska/mnoga participio nie jest przyjmowana;
+  - forma regularna (abrido, hacido, ponido, vido, escribido...) = źle z podpowiedzią "To forma regularna, a abrir jest nieregularny";
+  - w zdaniu z luką dobre participio ze złym lub brakującym "haber" (abierto, ha abierto zamiast he abierto) = źle z podpowiedzią o haber.
+- Nauka, Wszystkie, "Nie wiem" z przepisaniem, dźwięk i wyniki działają jak w lekcji 1.
+- Metering: tryby `inf`, `part`, `gap` w polu przodu; nowe wyniki quizu `regular` i `auxiliar`.
+
+### Kryteria akceptacji
+- `node --test` pokrywa sprawdzanie czasowników (participio, bezokolicznik, luka, forma regularna, haber).
+- Testy serwera przyjmują nowe tryby i wyniki.
+- Lekcja 2 działa na telefonie (375 px) bez przewijania w bok.

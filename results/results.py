@@ -20,9 +20,9 @@ from urllib.parse import parse_qs, urlsplit
 
 MAX_BODY = 4096
 MAX_LIST = 2000
-FRONTS = ("img", "es", "pl")
+FRONT_RE = re.compile(r"^[a-z]{1,8}$")
 RESULTS = {
-    "quiz": ("dobrze", "akcent", "literowka", "rodzajnik", "zle", "nie_wiem"),
+    "quiz": ("dobrze", "akcent", "literowka", "rodzajnik", "zle", "nie_wiem", "regular", "auxiliar"),
     "nauka": ("umiem", "nie_umiem"),
 }
 SESSION_RE = re.compile(r"^[a-z0-9]{6,32}$")
@@ -61,7 +61,7 @@ def validate(payload):
         "word": _text(payload, "word", 80),
         "deck": _text(payload, "deck", 10),
         "view": _text(payload, "view", 10),
-        "front": _text(payload, "front", 5),
+        "front": _text(payload, "front", 8),
         "answer": _text(payload, "answer", 200, required=False),
         "result": _text(payload, "result", 12),
         "session": _text(payload, "session", 32),
@@ -75,7 +75,7 @@ def validate(payload):
         raise ApiError(400, "Nie ma takiej talii.")
     if e["view"] not in RESULTS or e["result"] not in RESULTS[e["view"]]:
         raise ApiError(400, "Nieprawidłowy wynik.")
-    if e["front"] not in FRONTS:
+    if not FRONT_RE.match(e["front"]):
         raise ApiError(400, "Nieprawidłowy przód karty.")
     if not SESSION_RE.match(e["session"]):
         raise ApiError(400, "Nieprawidłowa runda.")
