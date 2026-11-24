@@ -102,7 +102,7 @@ footer { color: var(--muted); font-size: 12px; }
     </div>
   </section>
 
-  <footer>Fiszki Arriba Joven · wyniki z serwera · v1.8.0</footer>
+  <footer>Fiszki Arriba Joven · wyniki z serwera · v1.9.0</footer>
 </div>
 
 <script>
@@ -110,6 +110,7 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 const KEY = 'fiszki-admin';
 const tok = { get() { try { return localStorage.getItem(KEY) || ''; } catch { return ''; } }, set(v) { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch { } } };
+const LESSON = { l1: 'Lekcja 1' };
 const DECK = { ropa: 'La ropa', fisico: 'Descripción física', caracter: 'Carácter', todo: 'Wszystko' };
 const GOOD = new Set(['dobrze', 'akcent', 'literowka', 'rodzajnik', 'umiem']);
 const LABEL = { zle: 'źle', nie_wiem: 'nie wiem', nie_umiem: 'jeszcze nie', akcent: 'bez akcentu', literowka: 'literówka', rodzajnik: 'zły rodzajnik' };
@@ -166,7 +167,7 @@ function render() {
     const misses = list.filter(r => r.result !== 'dobrze' && r.result !== 'umiem');
     return `<article class="session">
       <div class="shead"><strong>${fmtDay(first)}, ${fmtTime(first)}–${fmtTime(end)}</strong>
-        <span class="muted">${esc(DECK[list[0].deck] || list[0].deck)} · ${view} · ${list.length} odp.</span>
+        <span class="muted">${esc(LESSON[list[0].lesson || 'l1'] || list[0].lesson)} · ${esc(DECK[list[0].deck] || list[0].deck)} · ${view} · ${list.length} odp.</span>
         <span class="pill ${pillCls(p)}">${good} z ${list.length} dobrze (${p}%)</span></div>
       ${misses.length ? `<ul class="miss">${misses.map(r => `<li><b lang="es">${esc(r.word)}</b> - ${LABEL[r.result] || r.result}${r.answer && r.result !== 'nie_wiem' ? ` <em>(wpisane: ${esc(r.answer)})</em>` : ''}</li>`).join('')}</ul>` : '<span class="muted">Bez błędów.</span>'}
     </article>`;

@@ -44,3 +44,17 @@ Cel: rodzic może sprawdzić, kto, kiedy i jak ćwiczył (wcześniej wyniki był
 ### Kryteria akceptacji
 - `python3 -m unittest discover -s results` przechodzi (walidacja, zapis, klucz, limit, HTTP).
 - Po rundzie quizu wpisy są widoczne na `/wyniki.html` z poprawnymi godzinami (czas lokalny).
+
+## Lekcje (od 1.9.0)
+Cel: materiał będzie przybywał lekcja po lekcji; uczeń najpierw wybiera lekcję, potem ćwiczy jej talie.
+
+- Ekran startowy "Lekcje": kafelek na lekcję - numer, tytuł, źródło (np. "Arriba Joven 1, s. 28 + karta La ropa"), miniatury, liczba kart, postęp "Umiesz X z Y" ucznia na tym urządzeniu.
+- Lekcja 1: "Opis wyglądu, charakteru i ubrania" = talie La ropa, Descripción física, Carácter (+ Wszystko z tej lekcji).
+- Po wybraniu lekcji widać dotychczasową aplikację (talie, widoki, quiz); przycisk "← Lekcje" wraca do panelu. Wybrana lekcja jest pamiętana na urządzeniu.
+- Pod kafelkami informacja, że kolejne lekcje pojawią się tutaj (bez wymyślonych lekcji).
+- Nowa lekcja = wpis w tablicy LESSONS w kodzie (karty z własnym prefiksem id, np. `l2r1`).
+- Metering: każda odpowiedź ma pole `lesson` (np. `l1`); serwer przyjmuje karty i talie z dowolnej lekcji (id karty `[a-z][a-z0-9]{1,7}`, talia `[a-z0-9_]{1,24}`). Starsze wpisy bez lekcji traktowane jako `l1`. Raport pokazuje lekcję przy każdej rundzie.
+
+### Kryteria akceptacji
+- Testy serwera pokrywają pole `lesson`, migrację starej bazy i nowe formaty id.
+- Panel działa na telefonie (375 px) bez przewijania w bok.

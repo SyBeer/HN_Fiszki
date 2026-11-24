@@ -193,6 +193,29 @@ kbd { font: 500 11px var(--f-body); border: 1px solid var(--line); border-bottom
 .tile .known { position: absolute; top: 6px; left: 6px; z-index: 2; width: 10px; height: 10px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 2px var(--plate); }
 .tile .say { display: none; }
 
+/* ---- panel lekcji ---- */
+.lessons { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 14px; }
+.lesson {
+  font: inherit; text-align: left; text-decoration: none; color: var(--fg); background: var(--surface); cursor: pointer;
+  border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: grid; gap: 12px; box-shadow: var(--shadow);
+}
+.lesson:hover { border-color: var(--accent); }
+.lesson:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ill.thumb { aspect-ratio: 1; background: var(--plate); border: 1px solid var(--plate-line); border-radius: 10px; }
+.ill.thumb svg { inset: 9%; width: 82%; height: 82%; }
+.lesson .num { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+.lesson h2 { font: 800 22px/1.15 var(--f-display); margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+.lesson .src { font-size: 13px; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips span { font-size: 12px; padding: 4px 10px; border-radius: 99px; background: var(--bg); border: 1px solid var(--line); }
+.lesson .foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lesson .foot .prog { display: flex; align-items: center; gap: 10px; }
+.lesson .go { color: var(--accent); font-weight: 700; }
+.more { border: 1px dashed var(--line); border-radius: 16px; padding: 16px; color: var(--muted); font-size: 13px; display: grid; place-items: center; text-align: center; min-height: 140px; }
+.sub .link { padding: 0; font-size: inherit; }
+#source:empty { display: none; }
+
 footer { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 12px; }
 
 /* ---- quiz ---- */
@@ -242,12 +265,12 @@ footer { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; g
   <header>
     <div>
       <h1>Fiszki <span class="pen">Arriba Joven</span></h1>
-      <p class="sub">Hiszpański: opis wyglądu, charakteru i ubrania. Kliknij kartę, żeby ją odwrócić.</p>
+      <p class="sub" id="sub"></p>
     </div>
     <nav class="decks" id="decks" aria-label="Talia"></nav>
   </header>
 
-  <div class="toolbar">
+  <div class="toolbar" id="toolbar">
     <div class="grp"><span class="seg-label">Widok</span>
       <div class="seg" id="views">
         <button data-v="learn">Nauka</button>
@@ -273,10 +296,12 @@ footer { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; g
   </div>
 
   <main id="main"></main>
+  <section id="home" aria-label="Lekcje" hidden></section>
 
   <footer>
-    <span>Słówka: Arriba Joven 1, s. 28 (ćw. 3.2 i 3.3) oraz karta „La ropa”.</span>
-    <span>v1.8.0</span>
+    <span id="source"></span>
+    <a href="wyniki.html">Wyniki (dla rodzica)</a>
+    <span>v1.9.0</span>
   </footer>
 </div>
 
@@ -608,12 +633,23 @@ const CARACTER = [
 ].map((c, i) => ({ ...c, id: 'c' + (i + 1), deck: 'caracter' }));
 
 const ALL = [...ROPA, ...FISICO, ...CARACTER];
-const DECKS = [
-  { id: 'ropa', name: 'La ropa', cards: ROPA },
-  { id: 'fisico', name: 'Descripción física', cards: FISICO },
-  { id: 'caracter', name: 'Carácter', cards: CARACTER },
-  { id: 'todo', name: 'Wszystko', cards: ALL },
+
+/* ===== lekcje (SPEC.md) - nowa lekcja = nowy wpis; karty z własnym prefiksem id, np. l2r1 ===== */
+const LESSONS = [
+  {
+    id: 'l1', n: 1, title: 'Opis wyglądu, charakteru i ubrania',
+    source: 'Arriba Joven 1, s. 28 (ćw. 3.2 i 3.3) oraz karta „La ropa”',
+    thumbs: ['r28', 'f1', 'c13'],
+    decks: [
+      { id: 'ropa', name: 'La ropa', cards: ROPA },
+      { id: 'fisico', name: 'Descripción física', cards: FISICO },
+      { id: 'caracter', name: 'Carácter', cards: CARACTER },
+    ],
+  },
 ];
+const lessonById = id => LESSONS.find(l => l.id === id);
+const lessonCards = l => l.decks.flatMap(d => d.cards);
+const decksOf = l => [...l.decks, { id: 'todo', name: 'Wszystko', cards: lessonCards(l) }];
 
 /* ===== stan ===== */
 const store = {
@@ -621,8 +657,10 @@ const store = {
   set(v) { try { localStorage.setItem('fiszki-arriba', JSON.stringify(v)); } catch { } },
 };
 const saved = store.get();
+let DECKS = decksOf(lessonById(saved.lesson) || LESSONS[0]);
 const st = {
-  deck: DECKS.some(d => d.id === saved.deck) ? saved.deck : 'ropa',
+  lesson: lessonById(saved.lesson) ? saved.lesson : '',
+  deck: DECKS.some(d => d.id === saved.deck) ? saved.deck : DECKS[0].id,
   view: ['learn', 'quiz', 'all'].includes(saved.view) ? saved.view : 'learn',
   front: ['img', 'es', 'pl', 'mix'].includes(saved.front) ? saved.front : 'img',
   known: new Set(Array.isArray(saved.known) ? saved.known : []),
@@ -630,7 +668,7 @@ const st = {
   student: typeof saved.student === 'string' ? saved.student : '', askName: false, session: '',
   mix: {}, queue: [], i: 0, flipped: false, missed: [], flippedTiles: new Set(), q: null, qInput: '', qMode: 'ask', qCopyErr: false,
 };
-const persist = () => store.set({ deck: st.deck, view: st.view, front: st.front, known: [...st.known], sound: st.sound, student: st.student });
+const persist = () => store.set({ lesson: st.lesson, deck: st.deck, view: st.view, front: st.front, known: [...st.known], sound: st.sound, student: st.student });
 const deck = () => DECKS.find(d => d.id === st.deck);
 const byId = Object.fromEntries(ALL.map(c => [c.id, c]));
 const cache = {};
@@ -666,7 +704,7 @@ const SPEAKER_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
 const SPEAKER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>';
 
 /* ===== render ===== */
-const CAT = { ropa: 'La ropa', fisico: 'Descripción física', caracter: 'Carácter' };
+const CAT = Object.fromEntries(LESSONS.flatMap(l => l.decks.map(d => [d.id, d.name])));
 const catHTML = c => `<div class="cat ${c.deck}" lang="es">${CAT[c.deck]}</div>`;
 const esHTML = c => `${c.tag ? `<span class="chip">${c.tag}</span>` : ''}<div class="es" lang="es">${c.art ? `<span class="art">${c.art}</span> ` : ''}${c.es}${c.esF ? `<span class="fem"> / ${c.esF}</span>` : ''}</div>`;
 const plHTML = c => `<div class="pl">${c.pl}</div>`;
@@ -709,7 +747,7 @@ async function flush() {
 function meter(c, view, result, answer = '') {
   if (!st.student) return;
   outbox.set([...outbox.get(), {
-    student: st.student, card: c.id, word: c.es, deck: st.deck, view, front: frontOf(c),
+    student: st.student, lesson: st.lesson, card: c.id, word: c.es, deck: st.deck, view, front: frontOf(c),
     answer: answer.slice(0, 200), result, session: st.session,
   }]);
   flush();
@@ -843,7 +881,38 @@ function dontKnow() {
   if (quizLang(c) === 'es') say(c);
 }
 
-function render() { renderChrome(); ({ learn: renderLearn, quiz: renderQuiz, all: renderAll })[st.view](); }
+function renderHome() {
+  $('#sub').textContent = 'Hiszpański. Wybierz lekcję.';
+  $('#source').textContent = '';
+  $('#home').innerHTML = `<div class="lessons">${LESSONS.map(l => {
+    const cards = lessonCards(l), k = cards.filter(c => st.known.has(c.id)).length;
+    return `<a class="lesson" href="#${l.id}" data-l="${l.id}">
+      <div class="thumbs">${l.thumbs.map(id => `<div class="ill thumb">${pic(byId[id])}</div>`).join('')}</div>
+      <span class="num">Lekcja ${l.n}</span>
+      <h2>${l.title}</h2>
+      <span class="src">${l.source}</span>
+      <span class="chips">${l.decks.map(d => `<span lang="es">${d.name} · ${d.cards.length}</span>`).join('')}</span>
+      <span class="foot"><span class="prog">Umiesz ${k} z ${cards.length}<span class="meter"><i style="width:${k / cards.length * 100}%"></i></span></span><span class="go">Otwórz lekcję →</span></span>
+    </a>`;
+  }).join('')}<div class="more">Kolejne lekcje pojawią się tutaj.</div></div>`;
+}
+
+function render() {
+  const home = !st.lesson;
+  $('#home').hidden = !home;
+  $('#decks').hidden = $('#toolbar').hidden = $('#main').hidden = home;
+  if (home) return renderHome();
+  const l = lessonById(st.lesson);
+  $('#sub').innerHTML = `<button class="link" id="home-btn" type="button">← Lekcje</button> · Lekcja ${l.n}: ${l.title}. Kliknij kartę, żeby ją odwrócić.`;
+  $('#source').textContent = `Słówka: ${l.source}.`;
+  renderChrome(); ({ learn: renderLearn, quiz: renderQuiz, all: renderAll })[st.view]();
+}
+function openLesson(id) {
+  const l = lessonById(id); if (!l) return;
+  if (st.lesson !== id) { DECKS = decksOf(l); if (!DECKS.some(d => d.id === st.deck)) st.deck = DECKS[0].id; }
+  st.lesson = id; st.confirmReset = false; st.flippedTiles.clear();
+  startRound(); persist(); render(); scrollTo(0, 0);
+}
 
 function flip() { st.flipped = !st.flipped; $('#card')?.classList.toggle('flipped', st.flipped); }
 function answer(ok) {
@@ -855,7 +924,9 @@ function answer(ok) {
 
 /* ===== zdarzenia ===== */
 document.addEventListener('click', e => {
-  const t = e.target.closest('button, .card, .tile'); if (!t) return;
+  const t = e.target.closest('button, .card, .tile, a[data-l]'); if (!t) return;
+  if (t.dataset.l) { e.preventDefault(); return openLesson(t.dataset.l); }
+  if (t.id === 'home-btn') { st.lesson = ''; persist(); try { speechSynthesis.cancel(); } catch { } return render(); }
   if (t.dataset.ch) {
     const a = $('#answer'), i = a.selectionStart ?? a.value.length, j = a.selectionEnd ?? i;
     a.value = a.value.slice(0, i) + t.dataset.ch + a.value.slice(j);
@@ -906,7 +977,7 @@ document.addEventListener('submit', e => {
 });
 document.addEventListener('keydown', e => {
   if (e.target.closest?.('.tile') && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); return e.target.click(); }
-  if (st.view !== 'learn' || e.metaKey || e.ctrlKey || e.altKey || e.target.tagName === 'INPUT') return;
+  if (!st.lesson || st.view !== 'learn' || e.metaKey || e.ctrlKey || e.altKey || e.target.tagName === 'INPUT') return;
   if (e.target.tagName === 'BUTTON' && (e.key === 'Enter' || e.key === ' ')) return;
   if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip(); }
   else if (e.key === 'ArrowRight') answer(true);

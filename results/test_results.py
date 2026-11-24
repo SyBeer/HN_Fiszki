@@ -34,14 +34,19 @@ class TestValidate(unittest.TestCase):
         self.assertEqual(e["student"], "Hania")
         self.assertEqual(e["card"], "r1")
 
+    def test_lesson_defaults_to_l1_and_accepts_new_lessons(self):
+        self.assertEqual(results.validate(entry())["lesson"], "l1")
+        e = results.validate(entry(lesson="l2", card="l2r1", deck="familia"))
+        self.assertEqual((e["lesson"], e["card"], e["deck"]), ("l2", "l2r1", "familia"))
+
     def test_learn_entry_without_answer(self):
         e = results.validate(entry(view="nauka", result="umiem", answer=None))
         self.assertEqual(e["answer"], "")
 
     def test_rejects_bad_fields(self):
         bad = [
-            entry(student=""), entry(student="x" * 41), entry(card="x1"), entry(card="r999"),
-            entry(result="super"), entry(view="test"), entry(front="video"), entry(deck="math"),
+            entry(student=""), entry(student="x" * 41), entry(card="R1!"), entry(card="1r"), entry(card="r12345678"), entry(lesson="L 1"),
+            entry(result="super"), entry(view="test"), entry(front="video"), entry(deck="Math!"),
             entry(answer="a" * 201), entry(word="w" * 81), entry(session="ZZ!"), "nie-obiekt",
             entry(view="nauka", result="dobrze"), entry(view="quiz", result="umiem"),
         ]
@@ -66,6 +71,25 @@ class TestStore(unittest.TestCase):
         self.assertEqual([r["student"] for r in rows], ["Ola", "Hania"])
         self.assertTrue(rows[0]["ts"].endswith("+00:00"))
         self.assertEqual([r["student"] for r in self.store.list(student="Hania")], ["Hania"])
+
+    def test_lesson_is_stored(self):
+        self.store.add("1.1.1.1", results.validate(entry(lesson="l2", card="l2r1")))
+        self.assertEqual(self.store.list()[0]["lesson"], "l2")
+
+    def test_migrates_old_db_without_lesson(self):
+        import sqlite3
+        old = Path(self.tmp.name) / "old.db"
+        with sqlite3.connect(old) as db:
+            db.execute("CREATE TABLE answers (id INTEGER PRIMARY KEY, ts TEXT NOT NULL, ip TEXT NOT NULL, "
+                       "student TEXT NOT NULL, card TEXT NOT NULL, word TEXT NOT NULL, deck TEXT NOT NULL, "
+                       "view TEXT NOT NULL, front TEXT NOT NULL, answer TEXT NOT NULL, result TEXT NOT NULL, "
+                       "session TEXT NOT NULL)")
+            db.execute("INSERT INTO answers (ts, ip, student, card, word, deck, view, front, answer, result, session) "
+                       "VALUES ('2026-10-26T15:00:00+00:00', 'x', 'Hania', 'r1', 'gorra', 'ropa', 'quiz', 'img', '', 'dobrze', 'abc123')")
+        store = results.Store(old)
+        self.assertEqual(store.list()[0]["lesson"], "l1")
+        store.add("1.1.1.1", results.validate(entry(lesson="l2", card="l2r1")))
+        self.assertEqual([r["lesson"] for r in store.list()], ["l2", "l1"])
 
     def test_survives_reopen(self):
         self.store.add("1.1.1.1", results.validate(entry()))

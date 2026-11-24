@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Zapis wyników fiszek (SPEC.md, Metering).
 
-POST /api/answer   {student, card, word, deck, view, front, answer, result, session} -> {"ok": true}
+POST /api/answer   {student, lesson, card, word, deck, view, front, answer, result, session} -> {"ok": true}
 GET  /api/results  (nagłówek X-Admin-Token, opcjonalnie ?student=) -> {"rows": [...]}
 """
 import hmac
@@ -20,15 +20,15 @@ from urllib.parse import parse_qs, urlsplit
 
 MAX_BODY = 4096
 MAX_LIST = 2000
-CARD_COUNTS = {"r": 28, "f": 39, "c": 24}
-DECKS = ("ropa", "fisico", "caracter", "todo")
 FRONTS = ("img", "es", "pl")
 RESULTS = {
     "quiz": ("dobrze", "akcent", "literowka", "rodzajnik", "zle", "nie_wiem"),
     "nauka": ("umiem", "nie_umiem"),
 }
 SESSION_RE = re.compile(r"^[a-z0-9]{6,32}$")
-CARD_RE = re.compile(r"^([rfc])(\d{1,2})$")
+CARD_RE = re.compile(r"^[a-z][a-z0-9]{1,7}$")
+DECK_RE = re.compile(r"^[a-z0-9_]{1,24}$")
+LESSON_RE = re.compile(r"^l\d{1,3}$")
 
 log = logging.getLogger("results")
 
@@ -57,7 +57,7 @@ def validate(payload):
         raise ApiError(400, "Nieprawidłowe zapytanie.")
     e = {
         "student": _text(payload, "student", 40),
-        "card": _text(payload, "card", 4),
+        "card": _text(payload, "card", 8),
         "word": _text(payload, "word", 80),
         "deck": _text(payload, "deck", 10),
         "view": _text(payload, "view", 10),
@@ -65,11 +65,13 @@ def validate(payload):
         "answer": _text(payload, "answer", 200, required=False),
         "result": _text(payload, "result", 12),
         "session": _text(payload, "session", 32),
+        "lesson": _text(payload, "lesson", 4, required=False) or "l1",
     }
-    m = CARD_RE.match(e["card"])
-    if not m or not 1 <= int(m.group(2)) <= CARD_COUNTS[m.group(1)]:
+    if not LESSON_RE.match(e["lesson"]):
+        raise ApiError(400, "Nie ma takiej lekcji.")
+    if not CARD_RE.match(e["card"]):
         raise ApiError(400, "Nie ma takiej karty.")
-    if e["deck"] not in DECKS:
+    if not DECK_RE.match(e["deck"]):
         raise ApiError(400, "Nie ma takiej talii.")
     if e["view"] not in RESULTS or e["result"] not in RESULTS[e["view"]]:
         raise ApiError(400, "Nieprawidłowy wynik.")
@@ -99,7 +101,7 @@ class RateLimiter:
 
 
 class Store:
-    COLUMNS = ("id", "ts", "ip", "student", "card", "word", "deck", "view", "front", "answer", "result", "session")
+    COLUMNS = ("id", "ts", "ip", "student", "card", "word", "deck", "view", "front", "answer", "result", "session", "lesson")
 
     def __init__(self, path):
         self.path = Path(path)
@@ -109,8 +111,10 @@ class Store:
                 "CREATE TABLE IF NOT EXISTS answers (id INTEGER PRIMARY KEY, ts TEXT NOT NULL, ip TEXT NOT NULL, "
                 "student TEXT NOT NULL, card TEXT NOT NULL, word TEXT NOT NULL, deck TEXT NOT NULL, "
                 "view TEXT NOT NULL, front TEXT NOT NULL, answer TEXT NOT NULL, result TEXT NOT NULL, "
-                "session TEXT NOT NULL)"
+                "session TEXT NOT NULL, lesson TEXT NOT NULL DEFAULT 'l1')"
             )
+            if "lesson" not in {row[1] for row in db.execute("PRAGMA table_info(answers)")}:
+                db.execute("ALTER TABLE answers ADD COLUMN lesson TEXT NOT NULL DEFAULT 'l1'")
 
     def connect(self):
         return sqlite3.connect(self.path)

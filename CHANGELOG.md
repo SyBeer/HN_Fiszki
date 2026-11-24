@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.9.0 - 2026-11-24
+- Panel wyboru lekcji na starcie; Lekcja 1 „Opis wyglądu, charakteru i ubrania” z trzema taliami, przycisk „← Lekcje”.
+- Wyniki zapisują lekcję (pole `lesson`, migracja starej bazy); raport pokazuje lekcję przy rundzie.
+- Serwer przyjmuje karty i talie przyszłych lekcji.
+- `tools/devserver.py` - lokalny podgląd z API.
+
 ## 1.8.0 - 2026-10-26
 - Metering: „Kto ćwiczy?” i zapis każdej odpowiedzi (Quiz i Nauka) na serwerze, z kolejką offline.
 - Strona wyników dla rodzica `/wyniki.html` (klucz): rundy, błędy, najtrudniejsze słowa.
