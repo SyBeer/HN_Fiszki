@@ -128,6 +128,7 @@ Zakres: jeden rodzic (jeden `ADMIN_EMAIL` + `ADMIN_TOKEN` w `.env`), widzi wszys
 - `GET /api/results`: nagłówki `X-Admin-Email` + `X-Admin-Token`. Gdy `ADMIN_EMAIL` ustawiony, muszą pasować oba (e-mail bez względu na wielkość liter i spacje). Bez `ADMIN_EMAIL` działa sam token (zgodność wstecz do czasu uzupełnienia `.env`).
 - `POST /api/remind {"email"}`: zawsze ta sama odpowiedź („Jeśli ten e-mail jest przypisany do wyników, przypomnienie przyjdzie za chwilę.”), żeby nie zdradzać, czy e-mail pasuje. Mail z tokenem idzie tylko na `ADMIN_EMAIL`, gdy podany e-mail pasuje i SMTP jest ustawiony. Wysyłka w tle (czas odpowiedzi nie zdradza wyniku).
 - Limity przypomnień: 3 na godzinę z jednego IP (potem 429) i najwyżej 1 mail na 10 minut w ogóle.
+- IP klienta za proxy (Caddy): nginx ufa `X-Forwarded-For` tylko od adresów prywatnych/lokalnych (od 1.14.1); limity działają na IP ucznia, nie proxy.
 - `/wyniki.html`: pola e-mail i token (przeglądarka zapamiętuje oba), przycisk „Nie pamiętam tokenu” wysyła przypomnienie na wpisany e-mail.
 
 ### Kryteria akceptacji

@@ -56,6 +56,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Klucz rodzica do testu dymnego
+        run: printf 'ADMIN_TOKEN=ci-token\n' > .env
       - name: docker compose build
         run: docker compose build
       - name: Test dymny - strona i API odpowiadają
@@ -67,6 +69,14 @@ jobs:
           code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8085/api/results)
           echo "GET /api/results bez klucza: $code"
           test "$code" != "200"
+          # za proxy (Caddy) serwer wyników widzi IP klienta z X-Forwarded-For, nie adres proxy
+          for i in $(seq 1 30); do curl -fsS -o /dev/null -H 'X-Admin-Token: ci-token' http://127.0.0.1:8085/api/results && break; sleep 1; done
+          curl -fsS -X POST -H 'Content-Type: application/json' -H 'X-Forwarded-For: 203.0.113.7' \
+            -d '{"student":"CI","lesson":"l1","card":"r1","word":"gorra","deck":"ropa","view":"quiz","front":"img","answer":"gorra","result":"dobrze","session":"ci0000smoke"}' \
+            http://127.0.0.1:8085/api/answer
+          ip=$(curl -fsS -H 'X-Admin-Token: ci-token' http://127.0.0.1:8085/api/results | python3 -c 'import json,sys;print(json.load(sys.stdin)["rows"][0]["ip"])')
+          echo "IP zapisane przez serwer wyników: $ip"
+          test "$ip" = "203.0.113.7"
       - name: Logi przy błędzie
         if: failure()
         run: docker compose logs

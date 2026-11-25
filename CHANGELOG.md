@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.14.1 - 2026-11-25
+- Poprawka: za Caddy serwer wyników widział adres proxy zamiast IP ucznia, więc limity „na IP” (odpowiedzi 120/min, przypomnienia 3/h) działały wspólnie dla wszystkich. nginx bierze teraz IP z `X-Forwarded-For` od proxy z sieci prywatnej.
+- Test dymny w CI sprawdza, że zapisane IP to IP klienta, nie proxy.
+
 ## 1.14.0 - 2026-11-25
 - Raport rodzica: logowanie e-mailem i tokenem (`ADMIN_EMAIL` + `ADMIN_TOKEN`); bez `ADMIN_EMAIL` działa sam token jak dotąd.
 - „Nie pamiętam tokenu”: przypomnienie mailem przez SMTP tylko na `ADMIN_EMAIL` (token się nie zmienia); ta sama odpowiedź dla każdego e-maila, limit 3/h z IP i 1 mail na 10 min.
