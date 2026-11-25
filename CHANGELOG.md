@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.11.0 - 2026-11-25
+- Przycisk „Wyloguj” na ekranie „Kto ćwiczy?”: czyści imię i kropki „umiesz” na tym urządzeniu, następny uczeń zaczyna od pustego imienia. Wyniki na serwerze zostają.
+
 ## 1.10.0 - 2026-11-24
 - Lekcja 2: Participios irregulares - 16 czasowników z rysunkami, talie wg końcówek (-cho, -ierto, -uelto, -to).
 - Tryby lekcji 2: bezokolicznik → participio, participio → bezokolicznik, zdanie z luką, mieszane.

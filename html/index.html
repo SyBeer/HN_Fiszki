@@ -307,11 +307,11 @@ footer { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; g
   <footer>
     <span id="source"></span>
     <a href="wyniki.html">Wyniki (dla rodzica)</a>
-    <span>v1.10.0</span>
+    <span>v1.11.0</span>
   </footer>
 </div>
 
-<script src="check.js?v=1.10.0"></script>
+<script src="check.js?v=1.11.0"></script>
 <script>
 /* ===== rysowanie ===== */
 const CL = 'var(--cl)', NS = 'stroke:none';
@@ -826,7 +826,7 @@ function renderName() {
     <h2>Kto ćwiczy?</h2>
     <p>Wpisz imię. Wyniki zapiszą się pod tym imieniem.</p>
     <div class="qrow"><input id="who-name" type="text" maxlength="40" autocapitalize="words" value="${esc(st.student)}" aria-label="Imię"></div>
-    <div class="row"><button class="btn primary" type="submit">Zaczynamy</button>${st.student ? '<button class="btn" id="who-cancel" type="button">Anuluj</button>' : ''}</div>
+    <div class="row"><button class="btn primary" type="submit">Zaczynamy</button>${st.student ? '<button class="btn" id="who-cancel" type="button">Anuluj</button><button class="btn" id="who-logout" type="button">Wyloguj</button>' : ''}</div>
   </form></div>`;
   $('#who-name').focus();
 }
@@ -1025,6 +1025,9 @@ document.addEventListener('click', e => {
     case 'say': return say(byId[st.queue[st.i]], true);
     case 'student': st.askName = true; return render();
     case 'who-cancel': st.askName = false; return render();
+    case 'who-logout':
+      flush(); try { speechSynthesis.cancel(); } catch { }
+      st.student = ''; st.known.clear(); st.askName = false; persist(); startRound(); return render();
     case 'sound':
       st.sound = !st.sound; persist();
       if (!st.sound) try { speechSynthesis.cancel(); } catch { }

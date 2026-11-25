@@ -77,3 +77,11 @@ Cel: materiał będzie przybywał lekcja po lekcji; uczeń najpierw wybiera lekc
 - `node --test` pokrywa sprawdzanie czasowników (participio, bezokolicznik, luka, forma regularna, haber).
 - Testy serwera przyjmują nowe tryby i wyniki.
 - Lekcja 2 działa na telefonie (375 px) bez przewijania w bok.
+
+## Wylogowanie ucznia (od 1.11.0)
+Na wspólnym urządzeniu uczeń kończy ćwiczenie przyciskiem „Wyloguj” (ekran „Kto ćwiczy?”, otwierany przyciskiem „Uczeń: …”).
+
+### Kryteria akceptacji
+- „Wyloguj” widać tylko, gdy ktoś jest zalogowany.
+- Po wylogowaniu pole imienia jest puste, a lokalne postępy (kropki „umiesz”) są wyczyszczone; bez imienia nie da się ćwiczyć.
+- Odpowiedzi wysłane i czekające w kolejce zostają przypisane do poprzedniego ucznia; wyniki na serwerze się nie zmieniają.
