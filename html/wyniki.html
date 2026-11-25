@@ -77,13 +77,22 @@ footer { color: var(--muted); font-size: 12px; }
   </header>
 
   <form class="panel" id="login" hidden>
-    <h2>Klucz rodzica</h2>
-    <p class="muted" style="margin:0">Wpisz klucz raz, ta przeglądarka go zapamięta.</p>
+    <h2>Logowanie rodzica</h2>
+    <p class="muted" style="margin:0">Wpisz e-mail i token raz, ta przeglądarka je zapamięta.</p>
     <div class="bar">
-      <input id="token" type="password" autocomplete="current-password" aria-label="Klucz rodzica" style="flex:1">
-      <button class="btn primary" type="submit">Pokaż wyniki</button>
+      <label for="email" class="muted" style="min-width:56px">E-mail</label>
+      <input id="email" type="email" autocomplete="username" inputmode="email" style="flex:1;min-width:0">
     </div>
-    <p class="err" id="login-err" hidden></p>
+    <div class="bar">
+      <label for="token" class="muted" style="min-width:56px">Token</label>
+      <input id="token" type="password" autocomplete="current-password" style="flex:1;min-width:0">
+    </div>
+    <div class="bar">
+      <button class="btn primary" type="submit">Pokaż wyniki</button>
+      <button class="btn" id="remind" type="button">Nie pamiętam tokenu</button>
+    </div>
+    <p class="err" id="login-err" role="alert" hidden></p>
+    <p class="muted" id="login-info" role="status" hidden></p>
   </form>
 
   <section id="report" hidden>
@@ -102,19 +111,20 @@ footer { color: var(--muted); font-size: 12px; }
     </div>
   </section>
 
-  <footer>Fiszki Arriba Joven · wyniki z serwera · v1.13.0</footer>
+  <footer>Fiszki Arriba Joven · wyniki z serwera · v1.14.0</footer>
 </div>
 
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 const KEY = 'fiszki-admin';
-const tok = { get() { try { return localStorage.getItem(KEY) || ''; } catch { return ''; } }, set(v) { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch { } } };
+const mem = k => ({ get() { try { return localStorage.getItem(k) || ''; } catch { return ''; } }, set(v) { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch { } } });
+const tok = mem(KEY), mail = mem('fiszki-admin-email');
 const LESSON = { l1: 'Lekcja 1', l2: 'Lekcja 2' };
 const DECK = { l2cho: '-cho', l2ierto: '-ierto', l2uelto: '-uelto', l2to: '-to', ropa: 'La ropa', fisico: 'Descripción física', caracter: 'Carácter', todo: 'Wszystko' };
 const GOOD = new Set(['dobrze', 'akcent', 'literowka', 'rodzajnik', 'umiem']);
 const LABEL = { zle: 'źle', nie_wiem: 'nie wiem', nie_umiem: 'jeszcze nie', akcent: 'bez akcentu', literowka: 'literówka', rodzajnik: 'zły rodzajnik', regular: 'forma regularna', auxiliar: 'zły „haber”' };
-let rows = [], token = tok.get();
+let rows = [], token = tok.get(), email = mail.get();
 
 const fmtDay = d => d.toLocaleDateString('pl-PL', { weekday: 'short', day: 'numeric', month: 'short' });
 const fmtTime = d => d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
@@ -124,9 +134,9 @@ const pillCls = p => p >= 80 ? 'good' : p >= 50 ? 'mid' : 'bad';
 async function load() {
   if (!token) return showLogin();
   let res;
-  try { res = await fetch('api/results', { headers: { 'X-Admin-Token': token }, cache: 'no-store' }); }
+  try { res = await fetch('api/results', { headers: { 'X-Admin-Token': token, 'X-Admin-Email': email }, cache: 'no-store' }); }
   catch { return showLogin('Brak połączenia z serwerem.'); }
-  if (res.status === 401) { tok.set(''); token = ''; return showLogin('Zły klucz. Wpisz go jeszcze raz.'); }
+  if (res.status === 401) { tok.set(''); token = ''; return showLogin('Zły e-mail lub token. Wpisz je jeszcze raz.'); }
   if (!res.ok) return showLogin('Serwer nie zwrócił wyników (' + res.status + ').');
   rows = (await res.json()).rows.map(r => ({ ...r, d: new Date(r.ts) }));
   $('#login').hidden = true; $('#report').hidden = false;
@@ -140,7 +150,9 @@ async function load() {
 function showLogin(msg) {
   $('#report').hidden = true; $('#login').hidden = false;
   $('#login-err').hidden = !msg; $('#login-err').textContent = msg || '';
-  $('#token').focus();
+  $('#login-info').hidden = true;
+  $('#email').value = email;
+  (email ? $('#token') : $('#email')).focus();
 }
 
 function render() {
@@ -185,10 +197,28 @@ function render() {
     : '<tbody><tr><td class="muted">Brak błędów.</td></tr></tbody>';
 }
 
-$('#login').addEventListener('submit', e => { e.preventDefault(); token = $('#token').value.trim(); tok.set(token); load(); });
+$('#login').addEventListener('submit', e => {
+  e.preventDefault();
+  email = $('#email').value.trim(); token = $('#token').value.trim();
+  if (!email || !token) return showLogin('Wpisz e-mail i token.');
+  mail.set(email); tok.set(token); load();
+});
+$('#remind').addEventListener('click', async () => {
+  const addr = $('#email').value.trim(), info = $('#login-info'), err = $('#login-err');
+  err.hidden = true; info.hidden = true;
+  if (!$('#email').checkValidity() || !addr) { err.textContent = 'Wpisz e-mail, na który ma przyjść przypomnienie.'; err.hidden = false; return $('#email').focus(); }
+  $('#remind').disabled = true;
+  try {
+    const res = await fetch('api/remind', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: addr }) });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) { info.textContent = data.message; info.hidden = false; }
+    else { err.textContent = data.error || 'Nie udało się wysłać prośby (' + res.status + ').'; err.hidden = false; }
+  } catch { err.textContent = 'Brak połączenia z serwerem.'; err.hidden = false; }
+  finally { $('#remind').disabled = false; }
+});
 $('#who').addEventListener('change', render);
 $('#refresh').addEventListener('click', load);
-$('#logout').addEventListener('click', () => { tok.set(''); token = ''; showLogin(); });
+$('#logout').addEventListener('click', () => { tok.set(''); token = ''; $('#token').value = ''; showLogin(); });
 load();
 </script>
 </body>

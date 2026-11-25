@@ -3,6 +3,7 @@
 Uruchomienie: python3 -m unittest discover -s results
 """
 import json
+import socketserver
 import tempfile
 import threading
 import unittest
@@ -148,6 +149,147 @@ class TestApp(unittest.TestCase):
         self.assertEqual(cm.exception.status, 400)
 
 
+class Outbox:
+    """Lokalny odbiorca maili do testów App (prawdziwy SMTP testuje TestSmtp)."""
+    def __init__(self):
+        self.sent = []
+
+    def send(self, to, subject, text):
+        self.sent.append((to, subject, text))
+
+
+class TestAdminLogin(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.clock = FakeClock()
+        self.mail = Outbox()
+        self.app = results.App(
+            results.Store(Path(self.tmp.name) / "r.db"), "sekret", results.RateLimiter(),
+            admin_email="Rodzic@Example.com", mailer=self.mail, clock=self.clock, background=False,
+            remind_limiter=results.RateLimiter(limit=3, window=3600, clock=self.clock),
+            public_url="https://fiszki.example/wyniki.html",
+        )
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_email_and_token_both_required(self):
+        self.assertEqual(self.app.results("sekret", {}, email=" rodzic@example.COM ")["rows"], [])
+        for email, token in (("rodzic@example.com", "zly"), ("inny@example.com", "sekret"), (None, "sekret"), ("", "sekret")):
+            with self.assertRaises(results.ApiError) as cm:
+                self.app.results(token, {}, email=email)
+            self.assertEqual(cm.exception.status, 401)
+            self.assertEqual(cm.exception.message, "Zły e-mail lub token.")
+
+    def test_without_admin_email_token_alone_works(self):
+        app = results.App(self.app.store, "sekret", results.RateLimiter())
+        self.assertEqual(app.results("sekret", {})["rows"], [])
+
+    def remind(self, email, ip="1.1.1.1"):
+        return self.app.remind(ip, json.dumps({"email": email}).encode())
+
+    def test_remind_sends_token_only_to_admin_email(self):
+        other = self.remind("ktos@example.com")
+        self.assertEqual(self.mail.sent, [])
+        ok = self.remind(" RODZIC@example.com ")
+        self.assertEqual(ok, other)
+        self.assertEqual(len(self.mail.sent), 1)
+        to, subject, text = self.mail.sent[0]
+        self.assertEqual(to, "Rodzic@Example.com")
+        self.assertIn("sekret", text)
+        self.assertIn("https://fiszki.example/wyniki.html", text)
+        self.assertTrue(subject)
+
+    def test_remind_cooldown_and_ip_limit(self):
+        self.remind("rodzic@example.com")
+        self.remind("rodzic@example.com")
+        self.assertEqual(len(self.mail.sent), 1)
+        self.remind("rodzic@example.com")
+        with self.assertRaises(results.ApiError) as cm:
+            self.remind("rodzic@example.com")
+        self.assertEqual(cm.exception.status, 429)
+        self.clock.t = 601
+        self.remind("rodzic@example.com", ip="2.2.2.2")
+        self.assertEqual(len(self.mail.sent), 2)
+
+    def test_remind_rejects_bad_input(self):
+        for body in (b"{zle", json.dumps({"email": "bez-malpy"}).encode(), json.dumps({"email": "a@" + "b" * 260}).encode(), b"[]"):
+            with self.assertRaises(results.ApiError) as cm:
+                self.app.remind("1.1.1.1", body)
+            self.assertEqual(cm.exception.status, 400)
+
+    def test_remind_without_mailer_does_nothing_but_answers_same(self):
+        app = results.App(self.app.store, "sekret", results.RateLimiter(), admin_email="rodzic@example.com")
+        self.assertEqual(app.remind("1.1.1.1", json.dumps({"email": "rodzic@example.com"}).encode()),
+                         self.remind("ktos@example.com"))
+
+
+class SmtpCatcher(socketserver.ThreadingTCPServer):
+    """Minimalny serwer SMTP (bez TLS) na localhost - zbiera wiadomości."""
+    allow_reuse_address = True
+
+    def __init__(self):
+        self.messages = []
+
+        class H(socketserver.StreamRequestHandler):
+            def handle(h):
+                h.wfile.write(b"220 test\r\n")
+                rcpt, data = [], None
+                while True:
+                    line = h.rfile.readline()
+                    if not line:
+                        return
+                    cmd = line.decode().strip()
+                    up = cmd.upper()
+                    if data is not None:
+                        if cmd == ".":
+                            self.messages.append((rcpt, "\n".join(data)))
+                            data, rcpt = None, []
+                            h.wfile.write(b"250 ok\r\n")
+                        else:
+                            data.append(cmd)
+                    elif up.startswith("EHLO") or up.startswith("HELO"):
+                        h.wfile.write(b"250-test\r\n250 AUTH PLAIN\r\n")
+                    elif up.startswith("AUTH"):
+                        h.wfile.write(b"235 ok\r\n")
+                    elif up.startswith("RCPT"):
+                        rcpt.append(cmd.split(":", 1)[1].strip(" <>"))
+                        h.wfile.write(b"250 ok\r\n")
+                    elif up.startswith("DATA"):
+                        data = []
+                        h.wfile.write(b"354 go\r\n")
+                    elif up.startswith("QUIT"):
+                        h.wfile.write(b"221 bye\r\n")
+                        return
+                    else:
+                        h.wfile.write(b"250 ok\r\n")
+
+        super().__init__(("127.0.0.1", 0), H)
+
+
+class TestSmtp(unittest.TestCase):
+    def test_smtp_mailer_delivers(self):
+        srv = SmtpCatcher()
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        try:
+            m = results.SmtpMailer("127.0.0.1", srv.server_address[1], "user", "haslo", "Fiszki <fiszki@example.com>", "none")
+            m.send("rodzic@example.com", "Przypomnienie", "Twój token: sekret")
+        finally:
+            srv.shutdown()
+            srv.server_close()
+        self.assertEqual(len(srv.messages), 1)
+        rcpt, raw = srv.messages[0]
+        self.assertEqual(rcpt, ["rodzic@example.com"])
+        self.assertIn("Subject: Przypomnienie", raw)
+
+    def test_mailer_from_env(self):
+        self.assertIsNone(results.mailer_from_env({}))
+        m = results.mailer_from_env({"SMTP_HOST": "smtp.example.com", "SMTP_PORT": "465", "SMTP_USER": "a@example.com"})
+        self.assertEqual((m.port, m.security, m.sender), (465, "ssl", "a@example.com"))
+        m = results.mailer_from_env({"SMTP_HOST": "smtp.example.com", "SMTP_USER": "a@example.com"})
+        self.assertEqual((m.port, m.security), (587, "starttls"))
+
+
 class TestHttp(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -184,6 +326,13 @@ class TestHttp(unittest.TestCase):
         status, data = self.call("/api/answer", json.dumps(entry(result="?")).encode())
         self.assertEqual(status, 400)
         self.assertTrue(data["error"])
+
+    def test_remind_endpoint_and_email_header(self):
+        status, data = self.call("/api/remind", json.dumps({"email": "ktos@example.com"}).encode())
+        self.assertEqual(status, 200)
+        self.assertTrue(data["message"])
+        status, _ = self.call("/api/results", headers={"X-Admin-Token": "sekret", "X-Admin-Email": "x@example.com"})
+        self.assertEqual(status, 200)  # serwer testowy bez ADMIN_EMAIL - sam token
 
     def test_unknown_path_404(self):
         self.assertEqual(self.call("/api/nic")[0], 404)

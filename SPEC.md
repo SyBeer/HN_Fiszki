@@ -117,3 +117,20 @@ Lekcja może mieć `defaults` (talia, przód/ćwiczenie, widok), stosowane przy 
 - Lekcja 2 otwiera się na talii „Wszystko” (16 czasowników), ćwiczeniu „Mieszane” i widoku Quiz.
 - W trakcie lekcji uczeń może zmienić talię, ćwiczenie i widok; wybór zostaje po odświeżeniu strony.
 - Lekcja 1 nie ma `defaults`: przejmuje talię, ćwiczenie i widok z poprzednio otwartej lekcji, jeśli ma takie same (jak dotąd).
+
+## Logowanie do wyników: e-mail + token, przypomnienie (od 1.14.0)
+Cel: rodzic loguje się do `/wyniki.html` e-mailem i tokenem; gdy zapomni tokenu, dostaje go mailem. Przypomnienie, nie reset - token się nie zmienia.
+
+Zakres: jeden rodzic (jeden `ADMIN_EMAIL` + `ADMIN_TOKEN` w `.env`), widzi wszystkich uczniów. Poza zakresem: wielu rodziców, zmiana tokenu z poziomu strony.
+
+- `.env`: `ADMIN_EMAIL`, `ADMIN_TOKEN`, `SMTP_HOST`, `SMTP_PORT` (domyślnie 587), `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` (domyślnie `SMTP_USER`), `SMTP_SECURITY` (`starttls` domyślnie, `ssl` dla 465, `none`), `PUBLIC_URL` (link w mailu, opcjonalny).
+- `GET /api/results`: nagłówki `X-Admin-Email` + `X-Admin-Token`. Gdy `ADMIN_EMAIL` ustawiony, muszą pasować oba (e-mail bez względu na wielkość liter i spacje). Bez `ADMIN_EMAIL` działa sam token (zgodność wstecz do czasu uzupełnienia `.env`).
+- `POST /api/remind {"email"}`: zawsze ta sama odpowiedź („Jeśli ten e-mail jest przypisany do wyników, przypomnienie przyjdzie za chwilę.”), żeby nie zdradzać, czy e-mail pasuje. Mail z tokenem idzie tylko na `ADMIN_EMAIL`, gdy podany e-mail pasuje i SMTP jest ustawiony. Wysyłka w tle (czas odpowiedzi nie zdradza wyniku).
+- Limity przypomnień: 3 na godzinę z jednego IP (potem 429) i najwyżej 1 mail na 10 minut w ogóle.
+- `/wyniki.html`: pola e-mail i token (przeglądarka zapamiętuje oba), przycisk „Nie pamiętam tokenu” wysyła przypomnienie na wpisany e-mail.
+
+### Kryteria akceptacji
+- Zły e-mail albo zły token -> 401 „Zły e-mail lub token.”; oba dobre -> wyniki.
+- Przypomnienie dla pasującego e-maila wysyła 1 mail z tokenem na `ADMIN_EMAIL`; dla innego e-maila nie wysyła nic, a odpowiedź jest identyczna.
+- Drugi pasujący wniosek w ciągu 10 minut nie wysyła drugiego maila; czwarty wniosek z jednego IP w godzinę -> 429.
+- Wysyłka SMTP sprawdzona testem na lokalnym serwerze SMTP (bez mockowania).

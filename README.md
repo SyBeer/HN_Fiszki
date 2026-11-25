@@ -3,7 +3,7 @@
 Fiszki obrazek / słowo dla Hani, na podstawie podręcznika *Arriba Joven 1* (s. 28, ćw. 3.2 i 3.3) i karty „La ropa”.
 91 kart w 3 taliach: La ropa, Descripción física, Carácter. Rysunki to SVG w kodzie, bez zewnętrznych obrazków.
 
-Wersja: **1.13.0**
+Wersja: **1.14.0**
 
 ## Lekcje
 Ekran startowy to panel lekcji. Lekcja 1: „Opis wyglądu, charakteru i ubrania” (talie La ropa, Descripción física, Carácter). Lekcja 2: „Participios irregulares” - 16 nieregularnych imiesłowów w taliach -cho, -ierto, -uelto, -to; tryby: bezokolicznik → participio, participio → bezokolicznik, zdanie z luką (he/ha + participio). Nowa lekcja = wpis w tablicy `LESSONS` w `html/index.html` (karty z prefiksem id, np. `l2r1`).
@@ -19,7 +19,7 @@ Przycisk „Dźwięk włączony / wyłączony” wycisza automatyczne czytanie s
 
 ## Wyniki uczniów
 Aplikacja pyta „Kto ćwiczy?” i wysyła każdą odpowiedź na serwer (kontener `fiszki-hiszpanski-results`, SQLite w wolumenie).
-Raport: https://fiszki.ktd.pl/wyniki.html - wymaga klucza rodzica (`ADMIN_TOKEN` w `.env` na serwerze, poza repo; wartość w menedżerze haseł).
+Raport: https://fiszki.ktd.pl/wyniki.html - logowanie e-mailem i tokenem rodzica (`ADMIN_EMAIL` + `ADMIN_TOKEN` w `.env` na serwerze, poza repo; wartość w menedżerze haseł). „Nie pamiętam tokenu” wysyła token mailem na `ADMIN_EMAIL` (przypomnienie, nie reset) - wymaga ustawień `SMTP_*` w `.env`, wzór w `.env.example`. Po zmianie `.env`: `docker compose up -d results`.
 
 ## Testy
 ```bash

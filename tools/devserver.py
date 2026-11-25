@@ -1,4 +1,6 @@
-"""Lokalny podgląd: pliki z html/ + /api/ z results.App (klucz rodzica: dev).
+"""Lokalny podgląd: pliki z html/ + /api/ z results.App (e-mail rodzica: dev@example.com, token: dev).
+
+Przypomnienie tokenu nie wysyła maila - treść wypisuje na konsolę.
 
 Uruchomienie: python3 tools/devserver.py   ->   http://localhost:8090
 """
@@ -14,7 +16,15 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "results"))
 import results  # noqa: E402
 
-app = results.App(results.Store(os.path.join(tempfile.gettempdir(), "fiszki-dev.db")), "dev", results.RateLimiter())
+
+
+class ConsoleMailer:
+    def send(self, to, subject, text):
+        print(f"[mail] do: {to} | {subject}\n{text}", flush=True)
+
+
+app = results.App(results.Store(os.path.join(tempfile.gettempdir(), "fiszki-dev.db")), "dev", results.RateLimiter(),
+                  admin_email="dev@example.com", mailer=ConsoleMailer(), public_url="http://localhost:8090/wyniki.html")
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -30,17 +40,19 @@ class Handler(SimpleHTTPRequestHandler):
         url = urlsplit(self.path)
         if url.path.startswith("/api/results"):
             try:
-                return self.reply(200, app.results(self.headers.get("X-Admin-Token"), parse_qs(url.query)))
+                return self.reply(200, app.results(self.headers.get("X-Admin-Token"), parse_qs(url.query),
+                                                   email=self.headers.get("X-Admin-Email")))
             except results.ApiError as e:
                 return self.reply(e.status, {"error": e.message})
         return super().do_GET()
 
     def do_POST(self):
-        if not self.path.startswith("/api/answer"):
+        handler = {"/api/answer": app.record, "/api/remind": app.remind}.get(urlsplit(self.path).path.rstrip("/"))
+        if not handler:
             return self.reply(404, {"error": "Nie znaleziono."})
         length = int(self.headers.get("Content-Length") or 0)
         try:
-            self.reply(200, app.record("127.0.0.1", self.rfile.read(length)))
+            self.reply(200, handler("127.0.0.1", self.rfile.read(length)))
         except results.ApiError as e:
             self.reply(e.status, {"error": e.message})
 
