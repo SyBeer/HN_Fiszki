@@ -1,0 +1,10 @@
+[Unit]
+Description=Fiszki - wdrożenie najnowszego GitHub Release
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/fiszki-hiszpanski/deploy/fiszki-deploy.sh
+TimeoutStartSec=15min

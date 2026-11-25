@@ -7,7 +7,8 @@ services:
     depends_on:
       - results
     ports:
-      - "8085:80"
+      # tylko lokalnie - z internetu przez Caddy (HTTPS)
+      - "127.0.0.1:8085:80"
 
   results:
     build:

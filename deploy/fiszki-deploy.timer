@@ -1,0 +1,11 @@
+[Unit]
+Description=Fiszki - sprawdzanie nowego wydania co 5 minut
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+RandomizedDelaySec=30s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

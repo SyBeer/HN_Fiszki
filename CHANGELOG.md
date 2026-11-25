@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.12.0 - 2026-11-25
+- Pipeline GitHub Actions: CI (lint, zgodność wersji, testy, build Dockera, test dymny) i Release na tag `vX.Y.Z`.
+- Auto-deploy na VPS w modelu pull: `deploy/fiszki-deploy.sh` + timer systemd co 5 min, test zdrowia i rollback. Zero sekretów w GitHubie.
+- Port 8085 tylko na `127.0.0.1` (z internetu wyłącznie HTTPS przez Caddy).
+- Dependabot dla akcji GitHub i obrazów Dockera.
+- `tools/check_version.py` - kontrola wersji w stopce, README i CHANGELOG.
+
 ## 1.11.0 - 2026-11-25
 - Przycisk „Wyloguj” na ekranie „Kto ćwiczy?”: czyści imię i kropki „umiesz” na tym urządzeniu, następny uczeń zaczyna od pustego imienia. Wyniki na serwerze zostają.
 

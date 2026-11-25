@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+# tylko odczyt - CI nie potrzebuje żadnych sekretów
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Testy i lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+
+      - name: Lint - składnia JS i Pythona
+        run: |
+          node --check html/check.js
+          python -m py_compile results/*.py tools/*.py deploy/*.py
+          bash -n deploy/fiszki-deploy.sh
+      - name: Lint - zgodność wersji
+        run: python tools/check_version.py
+      - name: Testy sprawdzania odpowiedzi (node)
+        run: node --test
+      - name: Testy serwera wyników
+        run: python -m unittest discover -s results -v
+      - name: Testy deployu i narzędzi
+        run: |
+          git config --global user.email ci@example.invalid
+          git config --global user.name CI
+          python -m unittest discover -s deploy -v
+          python -m unittest discover -s tools -v
+
+  docker:
+    name: Build obrazów Docker
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: docker compose build
+        run: docker compose build
+      - name: Test dymny - strona i API odpowiadają
+        run: |
+          docker compose up -d
+          for i in $(seq 1 30); do curl -fsS -o /dev/null http://127.0.0.1:8085/ && break; sleep 1; done
+          curl -fsS http://127.0.0.1:8085/ | grep -q "Fiszki"
+          # bez klucza rodzica raport jest niedostępny (401/403/503), nie 200
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8085/api/results)
+          echo "GET /api/results bez klucza: $code"
+          test "$code" != "200"
+      - name: Logi przy błędzie
+        if: failure()
+        run: docker compose logs

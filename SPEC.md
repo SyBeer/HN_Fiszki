@@ -85,3 +85,27 @@ Na wspólnym urządzeniu uczeń kończy ćwiczenie przyciskiem „Wyloguj” (ek
 - „Wyloguj” widać tylko, gdy ktoś jest zalogowany.
 - Po wylogowaniu pole imienia jest puste, a lokalne postępy (kropki „umiesz”) są wyczyszczone; bez imienia nie da się ćwiczyć.
 - Odpowiedzi wysłane i czekające w kolejce zostają przypisane do poprzedniego ucznia; wyniki na serwerze się nie zmieniają.
+
+## Pipeline GitHub i auto-deploy na VPS (od 1.12.0)
+Cel: każda zmiana jest sprawdzana automatycznie, a wydanie (tag) samo trafia na VPS Cyberfolks (fiszki.ktd.pl) - bez ręcznego `git pull` i bez dawania GitHubowi dostępu do serwera.
+
+- **CI** (`.github/workflows/ci.yml`) na push do `main` i na PR: `node --test`, testy serwera i deployu (Python), lint (`node --check`, `py_compile`, zgodność wersji w stopce, `check.js?v=`, wyniki.html, README i CHANGELOG), build obu obrazów Dockera (bez publikacji).
+- **Release** (`.github/workflows/release.yml`) na tag `vX.Y.Z`: najpierw całe CI, potem sprawdzenie, że tag = wersja w kodzie, i GitHub Release z wpisem z CHANGELOG. Bez zielonego CI nie ma Release.
+- **Deploy pull** (`deploy/fiszki-deploy.sh` + timer systemd co 5 min na VPS): skrypt pyta publiczne API GitHuba o najnowszy Release. Jeśli to inny tag niż wdrożony - `git checkout` tagu, `docker compose up -d --build`, test zdrowia `http://127.0.0.1:8085/`. Gdy test nie przejdzie - powrót do poprzedniej wersji.
+- Skrypt nie rusza plików lokalnych serwera (`.env`, `Caddyfile`, `docker-compose.override.yml`); przerywa, gdy pliki z repo są zmienione ręcznie. Przyjmuje tylko tagi `vX.Y.Z`. Dwa przebiegi naraz są zablokowane (`flock`).
+- Port 8085 nasłuchuje tylko na `127.0.0.1` - z internetu wyłącznie HTTPS przez Caddy.
+
+### Bezpieczeństwo
+- Zero sekretów w GitHubie: workflowy używają tylko wbudowanego `GITHUB_TOKEN` (CI tylko odczyt, Release `contents: write`). GitHub nie ma klucza SSH ani dostępu do VPS; `ADMIN_TOKEN` zostaje w `.env` na serwerze.
+- Akcje przypięte do SHA commita; Dependabot pilnuje ich aktualizacji i obrazów bazowych.
+- Brak `pull_request_target` - kod z forków nie dostaje uprawnień zapisu.
+
+### Poza zakresem
+- Publikacja obrazów do GHCR (VPS buduje obrazy sam).
+- SBOM (aplikacja nie jest dystrybuowana jako artefakt).
+- Backup wolumenu `results-data`, hardening SSH na VPS (osobne zadania z notatki VPS).
+
+### Kryteria akceptacji
+- `python3 -m unittest discover -s deploy` przechodzi: wdrożenie nowego Release, brak zmian przy tej samej wersji, brak Release (404), odrzucenie złej nazwy tagu, przerwanie przy ręcznych zmianach, rollback po nieudanym teście zdrowia.
+- Lint wersji wykrywa niezgodną wersję.
+- Push tagu z zielonym CI daje Release; VPS wdraża go w ciągu 5 minut (weryfikacja po pierwszym wydaniu).
