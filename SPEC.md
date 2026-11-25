@@ -109,3 +109,11 @@ Cel: każda zmiana jest sprawdzana automatycznie, a wydanie (tag) samo trafia na
 - `python3 -m unittest discover -s deploy` przechodzi: wdrożenie nowego Release, brak zmian przy tej samej wersji, brak Release (404), odrzucenie złej nazwy tagu, przerwanie przy ręcznych zmianach, rollback po nieudanym teście zdrowia.
 - Lint wersji wykrywa niezgodną wersję.
 - Push tagu z zielonym CI daje Release; VPS wdraża go w ciągu 5 minut (weryfikacja po pierwszym wydaniu).
+
+## Domyślne ustawienia lekcji (od 1.13.0)
+Lekcja może mieć `defaults` (talia, przód/ćwiczenie, widok), stosowane przy każdym wejściu do tej lekcji z panelu lekcji.
+
+### Kryteria akceptacji
+- Lekcja 2 otwiera się na talii „Wszystko” (16 czasowników), ćwiczeniu „Mieszane” i widoku Quiz.
+- W trakcie lekcji uczeń może zmienić talię, ćwiczenie i widok; wybór zostaje po odświeżeniu strony.
+- Lekcja 1 nie ma `defaults`: przejmuje talię, ćwiczenie i widok z poprzednio otwartej lekcji, jeśli ma takie same (jak dotąd).

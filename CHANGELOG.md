@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.13.0 - 2026-11-25
+- Lekcja 2 otwiera się od razu na teście całości: talia „Wszystko”, ćwiczenie „Mieszane”, widok Quiz. Talie, ćwiczenie i widok nadal można zmienić.
+
 ## 1.12.1 - 2026-11-25
 - nginx 1.27 → 1.29 (obraz bazowy, PR od Dependabota).
 

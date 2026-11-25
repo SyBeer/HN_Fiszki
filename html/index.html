@@ -307,11 +307,11 @@ footer { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; g
   <footer>
     <span id="source"></span>
     <a href="wyniki.html">Wyniki (dla rodzica)</a>
-    <span>v1.12.1</span>
+    <span>v1.13.0</span>
   </footer>
 </div>
 
-<script src="check.js?v=1.12.1"></script>
+<script src="check.js?v=1.13.0"></script>
 <script>
 /* ===== rysowanie ===== */
 const CL = 'var(--cl)', NS = 'stroke:none';
@@ -699,6 +699,7 @@ const LESSONS = [
     source: 'nieregularne imiesłowy do pretérito perfecto (he abierto, ha dicho...)',
     thumbs: ['l2v4', 'l2v11', 'l2v14'],
     frontLabel: 'Ćwiczenie',
+    defaults: { deck: 'todo', front: 'mix', view: 'quiz' },
     fronts: [['inf', 'Bezokolicznik → participio'], ['part', 'Participio → bezokolicznik'], ['gap', 'Zdanie z luką'], ['mix', 'Mieszane']],
     decks: ['cho', 'ierto', 'uelto', 'to'].map(e => ({ id: 'l2' + e, name: '-' + e, cards: VERBS.filter(c => c.deck === 'l2' + e) })),
   },
@@ -983,7 +984,13 @@ function render() {
 }
 function openLesson(id) {
   const l = lessonById(id); if (!l) return;
-  if (st.lesson !== id) { DECKS = decksOf(l); if (!DECKS.some(d => d.id === st.deck)) st.deck = DECKS[0].id; }
+  if (st.lesson !== id) {
+    DECKS = decksOf(l);
+    const d = l.defaults || {};
+    st.deck = d.deck || (DECKS.some(x => x.id === st.deck) ? st.deck : DECKS[0].id);
+    if (d.front) st.front = d.front;
+    if (d.view) st.view = d.view;
+  }
   st.lesson = id; ensureFront(); st.confirmReset = false; st.flippedTiles.clear();
   startRound(); persist(); render(); scrollTo(0, 0);
 }
