@@ -123,7 +123,8 @@ Cel: rodzic loguje się do `/wyniki.html` e-mailem i tokenem; gdy zapomni tokenu
 
 Zakres: jeden rodzic (jeden `ADMIN_EMAIL` + `ADMIN_TOKEN` w `.env`), widzi wszystkich uczniów. Poza zakresem: wielu rodziców, zmiana tokenu z poziomu strony.
 
-- `.env`: `ADMIN_EMAIL`, `ADMIN_TOKEN`, `SMTP_HOST`, `SMTP_PORT` (domyślnie 587), `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` (domyślnie `SMTP_USER`), `SMTP_SECURITY` (`starttls` domyślnie, `ssl` dla 465, `none`), `PUBLIC_URL` (link w mailu, opcjonalny).
+- `.env`: `ADMIN_EMAIL`, `ADMIN_TOKEN`, `SMTP_HOST`, `SMTP_PORT` (domyślnie 587), `SMTP_FROM` (wymagany, albo `SMTP_USER`), `SMTP_USER` + `SMTP_PASSWORD` (tylko SMTP z logowaniem), `SMTP_SECURITY` (`starttls` domyślnie, `ssl` dla 465, `none`), `SMTP_HELO` (domyślnie domena z `SMTP_FROM`), `PUBLIC_URL` (link w mailu, opcjonalny).
+- Produkcja (VPS fiszki.ktd.pl): przekaźnik Google Workspace `smtp-relay.gmail.com:587`, STARTTLS, bez logowania (autoryzacja po IP VPS), nadawca z domeny `ktd.pl`, EHLO `ktd.pl`.
 - `GET /api/results`: nagłówki `X-Admin-Email` + `X-Admin-Token`. Gdy `ADMIN_EMAIL` ustawiony, muszą pasować oba (e-mail bez względu na wielkość liter i spacje). Bez `ADMIN_EMAIL` działa sam token (zgodność wstecz do czasu uzupełnienia `.env`).
 - `POST /api/remind {"email"}`: zawsze ta sama odpowiedź („Jeśli ten e-mail jest przypisany do wyników, przypomnienie przyjdzie za chwilę.”), żeby nie zdradzać, czy e-mail pasuje. Mail z tokenem idzie tylko na `ADMIN_EMAIL`, gdy podany e-mail pasuje i SMTP jest ustawiony. Wysyłka w tle (czas odpowiedzi nie zdradza wyniku).
 - Limity przypomnień: 3 na godzinę z jednego IP (potem 429) i najwyżej 1 mail na 10 minut w ogóle.
@@ -133,4 +134,4 @@ Zakres: jeden rodzic (jeden `ADMIN_EMAIL` + `ADMIN_TOKEN` w `.env`), widzi wszys
 - Zły e-mail albo zły token -> 401 „Zły e-mail lub token.”; oba dobre -> wyniki.
 - Przypomnienie dla pasującego e-maila wysyła 1 mail z tokenem na `ADMIN_EMAIL`; dla innego e-maila nie wysyła nic, a odpowiedź jest identyczna.
 - Drugi pasujący wniosek w ciągu 10 minut nie wysyła drugiego maila; czwarty wniosek z jednego IP w godzinę -> 429.
-- Wysyłka SMTP sprawdzona testem na lokalnym serwerze SMTP (bez mockowania).
+- Wysyłka SMTP sprawdzona testem na lokalnym serwerze SMTP (bez mockowania), także bez logowania z EHLO = domena nadawcy.

@@ -3,7 +3,7 @@
 ## 1.14.0 - 2026-11-25
 - Raport rodzica: logowanie e-mailem i tokenem (`ADMIN_EMAIL` + `ADMIN_TOKEN`); bez `ADMIN_EMAIL` działa sam token jak dotąd.
 - „Nie pamiętam tokenu”: przypomnienie mailem przez SMTP tylko na `ADMIN_EMAIL` (token się nie zmienia); ta sama odpowiedź dla każdego e-maila, limit 3/h z IP i 1 mail na 10 min.
-- Nowe zmienne w `.env.example`: `ADMIN_EMAIL`, `SMTP_*`, `PUBLIC_URL`.
+- Nowe zmienne w `.env.example`: `ADMIN_EMAIL`, `SMTP_*`, `PUBLIC_URL`; gotowe ustawienia przekaźnika Google Workspace (bez logowania, EHLO = domena nadawcy).
 
 ## 1.13.0 - 2026-11-25
 - Lekcja 2 otwiera się od razu na teście całości: talia „Wszystko”, ćwiczenie „Mieszane”, widok Quiz. Talie, ćwiczenie i widok nadal można zmienić.

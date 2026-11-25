@@ -18,6 +18,7 @@ import time
 from collections import defaultdict, deque
 from datetime import datetime, timezone
 from email.message import EmailMessage
+from email.utils import parseaddr
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
@@ -152,18 +153,21 @@ def same_email(a, b):
 
 
 class SmtpMailer:
-    def __init__(self, host, port, user, password, sender, security="starttls"):
+    """SMTP z logowaniem (user + hasło) albo przekaźnik bez logowania (np. smtp-relay.gmail.com, autoryzacja po IP)."""
+
+    def __init__(self, host, port, user, password, sender, security="starttls", helo=None):
         self.host, self.port, self.user, self.password = host, int(port), user, password
-        self.sender, self.security = sender, security
+        self.sender, self.security, self.helo = sender, security, helo
 
     def send(self, to, subject, text):
         msg = EmailMessage()
         msg["From"], msg["To"], msg["Subject"] = self.sender, to, subject
         msg.set_content(text)
         if self.security == "ssl":
-            smtp = smtplib.SMTP_SSL(self.host, self.port, timeout=20, context=ssl.create_default_context())
+            smtp = smtplib.SMTP_SSL(self.host, self.port, local_hostname=self.helo, timeout=20,
+                                    context=ssl.create_default_context())
         else:
-            smtp = smtplib.SMTP(self.host, self.port, timeout=20)
+            smtp = smtplib.SMTP(self.host, self.port, local_hostname=self.helo, timeout=20)
         with smtp:
             if self.security == "starttls":
                 smtp.starttls(context=ssl.create_default_context())
@@ -174,12 +178,15 @@ class SmtpMailer:
 
 def mailer_from_env(env):
     host = env.get("SMTP_HOST")
-    if not host:
+    user = env.get("SMTP_USER") or ""
+    sender = env.get("SMTP_FROM") or user
+    if not host or not sender:
         return None
     port = int(env.get("SMTP_PORT") or 587)
     security = env.get("SMTP_SECURITY") or ("ssl" if port == 465 else "starttls")
-    user = env.get("SMTP_USER") or ""
-    return SmtpMailer(host, port, user, env.get("SMTP_PASSWORD") or "", env.get("SMTP_FROM") or user, security)
+    # przedstawiamy się domeną nadawcy (jak "domain" w msmtp), nie nazwą kontenera
+    helo = env.get("SMTP_HELO") or parseaddr(sender)[1].rpartition("@")[2] or None
+    return SmtpMailer(host, port, user, env.get("SMTP_PASSWORD") or "", sender, security, helo)
 
 
 class App:
@@ -307,7 +314,7 @@ def main():
     if admin_token and not admin_email:
         log.warning("Brak ADMIN_EMAIL - logowanie do wyników samym tokenem, bez przypomnień.")
     elif admin_email and not mailer:
-        log.warning("Brak SMTP_HOST - przypomnienia tokenu nie będą wysyłane.")
+        log.warning("Brak SMTP_HOST lub SMTP_FROM - przypomnienia tokenu nie będą wysyłane.")
     store = Store(os.environ.get("DB_PATH", "/data/results.db"))
     app = App(store, admin_token, RateLimiter(limit=int(os.environ.get("RATE_LIMIT", "120"))),
               admin_email=admin_email, mailer=mailer, public_url=os.environ.get("PUBLIC_URL", ""))

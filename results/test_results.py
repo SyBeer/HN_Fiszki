@@ -230,6 +230,8 @@ class SmtpCatcher(socketserver.ThreadingTCPServer):
 
     def __init__(self):
         self.messages = []
+        self.helo = None
+        self.authed = False
 
         class H(socketserver.StreamRequestHandler):
             def handle(h):
@@ -249,8 +251,10 @@ class SmtpCatcher(socketserver.ThreadingTCPServer):
                         else:
                             data.append(cmd)
                     elif up.startswith("EHLO") or up.startswith("HELO"):
+                        self.helo = cmd.split(" ", 1)[1] if " " in cmd else ""
                         h.wfile.write(b"250-test\r\n250 AUTH PLAIN\r\n")
                     elif up.startswith("AUTH"):
+                        self.authed = True
                         h.wfile.write(b"235 ok\r\n")
                     elif up.startswith("RCPT"):
                         rcpt.append(cmd.split(":", 1)[1].strip(" <>"))
@@ -282,12 +286,32 @@ class TestSmtp(unittest.TestCase):
         self.assertEqual(rcpt, ["rodzic@example.com"])
         self.assertIn("Subject: Przypomnienie", raw)
 
+    def test_relay_without_login_uses_domain_in_helo(self):
+        srv = SmtpCatcher()
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        try:
+            m = results.mailer_from_env({"SMTP_HOST": "127.0.0.1", "SMTP_PORT": str(srv.server_address[1]),
+                                         "SMTP_SECURITY": "none", "SMTP_FROM": "Fiszki <fiszki@ktd.pl>"})
+            m.send("rodzic@example.com", "Przypomnienie", "token")
+        finally:
+            srv.shutdown()
+            srv.server_close()
+        self.assertEqual(len(srv.messages), 1)
+        self.assertFalse(srv.authed)
+        self.assertEqual(srv.helo, "ktd.pl")
+        self.assertIn("From: Fiszki <fiszki@ktd.pl>", srv.messages[0][1])
+
     def test_mailer_from_env(self):
         self.assertIsNone(results.mailer_from_env({}))
         m = results.mailer_from_env({"SMTP_HOST": "smtp.example.com", "SMTP_PORT": "465", "SMTP_USER": "a@example.com"})
         self.assertEqual((m.port, m.security, m.sender), (465, "ssl", "a@example.com"))
         m = results.mailer_from_env({"SMTP_HOST": "smtp.example.com", "SMTP_USER": "a@example.com"})
         self.assertEqual((m.port, m.security), (587, "starttls"))
+        m = results.mailer_from_env({"SMTP_HOST": "smtp-relay.gmail.com", "SMTP_FROM": "fiszki@ktd.pl"})
+        self.assertEqual((m.port, m.security, m.user, m.sender, m.helo), (587, "starttls", "", "fiszki@ktd.pl", "ktd.pl"))
+        m = results.mailer_from_env({"SMTP_HOST": "h", "SMTP_FROM": "fiszki@ktd.pl", "SMTP_HELO": "vps.ktd.pl"})
+        self.assertEqual(m.helo, "vps.ktd.pl")
+        self.assertIsNone(results.mailer_from_env({"SMTP_HOST": "h"}))  # bez nadawcy nie wysyłamy
 
 
 class TestHttp(unittest.TestCase):

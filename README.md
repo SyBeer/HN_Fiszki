@@ -19,7 +19,7 @@ Przycisk „Dźwięk włączony / wyłączony” wycisza automatyczne czytanie s
 
 ## Wyniki uczniów
 Aplikacja pyta „Kto ćwiczy?” i wysyła każdą odpowiedź na serwer (kontener `fiszki-hiszpanski-results`, SQLite w wolumenie).
-Raport: https://fiszki.ktd.pl/wyniki.html - logowanie e-mailem i tokenem rodzica (`ADMIN_EMAIL` + `ADMIN_TOKEN` w `.env` na serwerze, poza repo; wartość w menedżerze haseł). „Nie pamiętam tokenu” wysyła token mailem na `ADMIN_EMAIL` (przypomnienie, nie reset) - wymaga ustawień `SMTP_*` w `.env`, wzór w `.env.example`. Po zmianie `.env`: `docker compose up -d results`.
+Raport: https://fiszki.ktd.pl/wyniki.html - logowanie e-mailem i tokenem rodzica (`ADMIN_EMAIL` + `ADMIN_TOKEN` w `.env` na serwerze, poza repo; wartość w menedżerze haseł). „Nie pamiętam tokenu” wysyła token mailem na `ADMIN_EMAIL` (przypomnienie, nie reset) - wymaga ustawień `SMTP_*` w `.env`, wzór w `.env.example`. Na VPS poczta idzie przez przekaźnik Google Workspace (`smtp-relay.gmail.com:587`, bez hasła, autoryzacja po IP VPS) jako `fiszki@ktd.pl`; po zmianie IP VPS trzeba poprawić regułę przekaźnika w Google Admin. Po zmianie `.env`: `docker compose up -d results`.
 
 ## Testy
 ```bash
