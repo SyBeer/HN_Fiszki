@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.12.1 - 2026-11-25
+- nginx 1.27 → 1.29 (obraz bazowy, PR od Dependabota).
+
 ## 1.12.0 - 2026-11-25
 - Pipeline GitHub Actions: CI (lint, zgodność wersji, testy, build Dockera, test dymny) i Release na tag `vX.Y.Z`.
 - Auto-deploy na VPS w modelu pull: `deploy/fiszki-deploy.sh` + timer systemd co 5 min, test zdrowia i rollback. Zero sekretów w GitHubie.
