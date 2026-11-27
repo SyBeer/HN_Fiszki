@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.14.2 - 2026-11-27
+- Bezpieczeństwo: obraz bazowy `nginx:1.29-alpine` (gałąź bez poprawek, 58 podatności HIGH/CRITICAL wg Trivy) zamieniony na `nginx:stable-alpine` (nginx 1.30, Alpine 3.24, 6 podatności); przebudowa z `--pull` dostaje odtąd bieżące łatki.
+
 ## 1.14.1 - 2026-11-25
 - Poprawka: za Caddy serwer wyników widział adres proxy zamiast IP ucznia, więc limity „na IP” (odpowiedzi 120/min, przypomnienia 3/h) działały wspólnie dla wszystkich. nginx bierze teraz IP z `X-Forwarded-For` od proxy z sieci prywatnej.
 - Test dymny w CI sprawdza, że zapisane IP to IP klienta, nie proxy.

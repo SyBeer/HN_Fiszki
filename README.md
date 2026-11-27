@@ -3,7 +3,7 @@
 Fiszki obrazek / słowo dla Hani, na podstawie podręcznika *Arriba Joven 1* (s. 28, ćw. 3.2 i 3.3) i karty „La ropa”.
 91 kart w 3 taliach: La ropa, Descripción física, Carácter. Rysunki to SVG w kodzie, bez zewnętrznych obrazków.
 
-Wersja: **1.14.1**
+Wersja: **1.14.2**
 
 ## Lekcje
 Ekran startowy to panel lekcji. Lekcja 1: „Opis wyglądu, charakteru i ubrania” (talie La ropa, Descripción física, Carácter). Lekcja 2: „Participios irregulares” - 16 nieregularnych imiesłowów w taliach -cho, -ierto, -uelto, -to; tryby: bezokolicznik → participio, participio → bezokolicznik, zdanie z luką (he/ha + participio). Nowa lekcja = wpis w tablicy `LESSONS` w `html/index.html` (karty z prefiksem id, np. `l2r1`).
